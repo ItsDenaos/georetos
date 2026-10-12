@@ -1,0 +1,243 @@
+@import '@fontsource-variable/fraunces/soft.css';
+@import '@fontsource-variable/fraunces/soft-italic.css';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+@import 'tailwindcss';
+
+/*
+ * Identidad de GeoRetos: "atlas risográfico".
+ * Papel crema con grano, tinta azul marino y cuatro tintas de risografía
+ * (cobalto, rosa flúor, sol y jade), sombras duras de imprenta, sellos y rutas.
+ */
+@theme {
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Bricolage Grotesque Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  --color-paper: #f6f0e1;
+  --color-paper-light: #fffbf1;
+  --color-paper-deep: #ebe1c8;
+  --color-ink: #1b1f3b;
+  --color-ink-soft: #4b4f6b;
+
+  --color-cobalt: #2f4fd1;
+  --color-cobalt-deep: #2238a3;
+  --color-cobalt-light: #dde4ff;
+  --color-pink: #ff5fa2;
+  --color-pink-ink: #c2276f;
+  --color-pink-light: #ffe1ee;
+  --color-sun: #ffc93c;
+  --color-sun-ink: #7f5300;
+  --color-sun-light: #fff1c4;
+  --color-jade: #15a37a;
+  --color-jade-ink: #0b6b4f;
+  --color-jade-light: #d4f3e6;
+  --color-tomato: #f2543d;
+  --color-tomato-ink: #b12f1d;
+  --color-tomato-light: #ffe1da;
+  --color-sea: #bfe3ea;
+  --color-sand: #f7e2ae;
+
+  --shadow-ink-sm: 2px 2px 0 0 #1b1f3b;
+  --shadow-ink: 4px 4px 0 0 #1b1f3b;
+  --shadow-ink-lg: 7px 7px 0 0 #1b1f3b;
+
+  --animate-pop: pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  --animate-shake: shake 380ms ease-in-out;
+  --animate-rise: rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slam: slam 420ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+  --animate-float: float 5s ease-in-out infinite;
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.85);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      translate: 0;
+    }
+    20% {
+      translate: -7px;
+    }
+    40% {
+      translate: 6px;
+    }
+    60% {
+      translate: -4px;
+    }
+    80% {
+      translate: 2px;
+    }
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(14px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  /* Un sello que cae sobre el papel: grande y transparente → golpe → rebote. */
+  @keyframes slam {
+    0% {
+      transform: scale(2.2) rotate(var(--stamp-rotate, -6deg));
+      opacity: 0;
+    }
+    55% {
+      transform: scale(0.92) rotate(var(--stamp-rotate, -6deg));
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(var(--stamp-rotate, -6deg));
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-6px) rotate(1.5deg);
+    }
+  }
+}
+
+:root {
+  color-scheme: light;
+
+  /* Texturas reutilizables */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .11 0 0 0 0 .12 0 0 0 0 .23 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Máscara de tinta: huecos irregulares como un sello de goma real. */
+  --ink-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -4.5 0 0 0 3.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+
+  /* Colores del mapa (WorldMap.vue) */
+  --map-ocean: #bfe3ea;
+  --map-ocean-ink: #7fbccb;
+  --map-graticule: rgb(27 31 59 / 0.14);
+  --map-land: #f7e2ae;
+  --map-muted: #ebdcb8;
+  --map-dim: #e8e3d4;
+  --map-border: rgb(27 31 59 / 0.55);
+  --map-border-strong: #1b1f3b;
+  --map-ok: #15a37a;
+  --map-meh: #ffc93c;
+  --map-fail: #f2543d;
+  --map-wrong: #ff7d69;
+  --map-focus: #2f4fd1;
+  --map-related: #9aaaf2;
+  --map-blink: #ff5fa2;
+  --map-pattern-ink: rgb(27 31 59 / 0.35);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-paper);
+  background-image: var(--grain);
+  @apply font-sans text-ink antialiased;
+}
+
+/* Fraunces con el eje SOFT al máximo: serifas redondeadas, amables. */
+.font-display {
+  font-variation-settings: 'SOFT' 100;
+  letter-spacing: -0.02em;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-cobalt);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--color-pink);
+    color: var(--color-ink);
+  }
+}
+
+/* ---------- Componentes (en Tailwind 4 se declaran con @utility) ---------- */
+
+/* Botón de imprenta: borde de tinta y sombra dura que se "hunde" al pulsar. */
+@utility btn {
+  @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-ink px-5 text-base font-bold shadow-ink transition-[transform,box-shadow,background-color] duration-150 select-none disabled:pointer-events-none disabled:opacity-45;
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 0 var(--color-ink);
+  }
+  &:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 var(--color-ink);
+  }
+}
+@utility btn-primary {
+  @apply btn bg-cobalt text-paper-light;
+}
+@utility btn-secondary {
+  @apply btn bg-paper-light text-ink;
+}
+@utility btn-accent {
+  @apply btn bg-sun text-ink;
+}
+@utility btn-ghost {
+  @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 font-bold text-ink underline decoration-2 underline-offset-4 decoration-pink transition hover:bg-paper-deep/60 disabled:pointer-events-none disabled:opacity-45;
+}
+
+/* Ficha de papel con borde de tinta y sombra dura. */
+@utility card {
+  @apply rounded-2xl border-2 border-ink bg-paper-light shadow-ink;
+}
+
+/* Etiqueta tipo coordenadas: mono, mayúsculas y espaciada. */
+@utility label-mono {
+  @apply font-mono text-[0.7rem] font-semibold tracking-[0.14em] uppercase;
+}
+
+/* Trama de puntos de risografía (el color sale de currentColor). */
+@utility halftone {
+  background-image: radial-gradient(currentColor 1.1px, transparent 1.5px);
+  background-size: 9px 9px;
+}
+
+/* Retícula de meridianos y paralelos muy tenue. */
+@utility graticule-bg {
+  background-image:
+    linear-gradient(rgb(27 31 59 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(27 31 59 / 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+/* Desfase de registro de risografía en titulares. */
+@utility riso-shadow {
+  text-shadow: 0.06em 0.06em 0 var(--color-pink);
+}
+
+/* Textura de sello de goma. */
+@utility ink-texture {
+  mask-image: var(--ink-mask);
+  mask-size: 140px 140px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
