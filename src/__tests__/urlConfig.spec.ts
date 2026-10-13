@@ -3,10 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
   locateQuery,
   parseLocateQuery,
+  parseRunQuery,
   parseSilhouetteQuery,
   parseTriviaQuery,
+  parseTypingQuery,
+  runQuery,
   silhouetteQuery,
   triviaQuery,
+  typingQuery,
 } from '@/lib/urlConfig'
 
 describe('configuración en la URL', () => {
@@ -78,5 +82,65 @@ describe('configuración de Silueta en la URL', () => {
   it('ida y vuelta sin perder datos', () => {
     const config = { region: 'asia' as const, count: 5 as const, seed: 'z1', only: ['jp', 'kr'] }
     expect(parseSilhouetteQuery(silhouetteQuery(config) as Record<string, string>)).toEqual(config)
+  })
+})
+
+describe('Contrarreloj y Supervivencia en la URL', () => {
+  it('lee /mapa?variante=contrarreloj&region=europa', () => {
+    const query = { variante: 'contrarreloj', region: 'europa', seed: 'a1' }
+    expect(parseRunQuery('locate', query)).toEqual({
+      mode: 'locate',
+      variant: 'contrarreloj',
+      region: 'europa',
+      difficulty: 'media',
+      seed: 'a1',
+    })
+  })
+
+  it('sin variante válida es una partida clásica', () => {
+    expect(parseRunQuery('locate', { region: 'europa', n: '10' })).toBeNull()
+    expect(parseRunQuery('trivia', { dificultad: 'media' })).toBeNull()
+    expect(parseRunQuery('trivia', { variante: 'clasica' })).toBeNull()
+    expect(parseRunQuery('locate', { variante: 'contrarreloj', region: 'marte' })).toBeNull()
+  })
+
+  it('Supervivencia se juega siempre con el mundo', () => {
+    const query = { variante: 'supervivencia', region: 'asia' }
+    expect(parseRunQuery('locate', query)?.region).toBe('mundo')
+  })
+
+  it('ida y vuelta sin perder datos', () => {
+    const config = {
+      mode: 'trivia' as const,
+      variant: 'contrarreloj' as const,
+      region: 'africa' as const,
+      difficulty: 'dificil' as const,
+      seed: 'k9',
+    }
+    expect(parseRunQuery('trivia', runQuery(config) as Record<string, string>)).toEqual(config)
+    // Solo se escribe lo que la variante usa.
+    const survival = { ...config, mode: 'locate' as const, variant: 'supervivencia' as const }
+    expect(runQuery(survival)).toEqual({ variante: 'supervivencia', seed: 'k9' })
+  })
+})
+
+describe('Escribe los países en la URL', () => {
+  it('lee /escribe?region=europa&min=10 y la región es opcional', () => {
+    expect(parseTypingQuery({ region: 'europa', min: '10' })).toEqual({
+      region: 'europa',
+      minutes: 10,
+    })
+    expect(parseTypingQuery({ min: '15' })).toEqual({ region: 'mundo', minutes: 15 })
+  })
+
+  it('sin tiempo válido muestra la configuración', () => {
+    expect(parseTypingQuery({})).toBeNull()
+    expect(parseTypingQuery({ min: '7' })).toBeNull()
+    expect(parseTypingQuery({ region: 'marte', min: '5' })).toBeNull()
+  })
+
+  it('ida y vuelta sin perder datos', () => {
+    const config = { region: 'caribe' as const, minutes: 5 as const }
+    expect(parseTypingQuery(typingQuery(config) as Record<string, string>)).toEqual(config)
   })
 })

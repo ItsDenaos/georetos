@@ -5,7 +5,7 @@ import { recordKey, type GameResult, type RecordEntry } from '@/lib/results'
 import { isBetter } from '@/lib/scoring'
 import { readJson, writeJson } from '@/lib/storage'
 
-const STORAGE_KEY = 'georetos:v1:progreso'
+export const STORAGE_KEY = 'georetos:v1:progreso'
 
 interface ProgressData {
   gamesPlayed: number

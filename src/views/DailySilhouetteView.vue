@@ -55,7 +55,7 @@ onBeforeUnmount(() => clearInterval(ticker))
       <p class="label-mono text-pink-ink">{{ dateLabel }}</p>
       <h1 class="mt-1 font-display text-[2.5rem] leading-none font-extrabold sm:text-6xl">
         {{ es.silhouette.dailyTitle }}
-        <span class="whitespace-nowrap text-cobalt italic">{{
+        <span class="whitespace-nowrap text-cobalt-ink italic">{{
           es.silhouette.dailyNumber(daily.challenge.number)
         }}</span>
       </h1>

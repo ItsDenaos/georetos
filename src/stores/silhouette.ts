@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 import { es } from '@/i18n/es'
 import { getCountry } from '@/lib/countries'
-import type { GameResult } from '@/lib/results'
+import type { AnswerMark, GameResult } from '@/lib/results'
 import { createRng } from '@/lib/rng'
 import { maxScore, silhouettePoints } from '@/lib/scoring'
 import {
@@ -83,6 +83,15 @@ export const useSilhouetteStore = defineStore('silhouette', () => {
       total: queue.value.length,
       timeMs: endedAt.value - startedAt.value,
       finishedAt: new Date(endedAt.value).toISOString(),
+      answers: queue.value.map((code) => {
+        const list = guesses.value[code] ?? []
+        const mark: AnswerMark = !roundState(list).solved
+          ? 'fail'
+          : list.length === 1
+            ? 'ok'
+            : 'meh'
+        return { code, mark }
+      }),
       misses: missed.map((code) => {
         const country = getCountry(code)
         return {

@@ -4,6 +4,7 @@
  */
 import { es } from '@/i18n/es'
 import { CONTINENTS, PLAYABLE, capitalsOf, getCountry, playableIn } from './countries'
+import { normalize } from './normalize'
 import { createRng, type Rng } from './rng'
 import type { ContinentId, Country, Difficulty, RegionId } from './types'
 
@@ -63,13 +64,11 @@ export interface TriviaConfig {
   /** Partida de repaso: solo preguntas sobre estos países. */
   only?: string[]
   count?: number
+  /** Países que no pueden protagonizar una pregunta (por ejemplo, ya usados en el Reto diario). */
+  exclude?: readonly string[]
+  /** Tipos de pregunta permitidos (por defecto, todos). */
+  types?: readonly QuestionType[]
 }
-
-const normalize = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
 
 /** "Ciudad de México" o "Brasilia" delatan al país: solo se preguntan en fácil. */
 function capitalRevealsCountry(c: Country): boolean {
@@ -266,17 +265,23 @@ export function generateTrivia(config: TriviaConfig): Question[] {
   const rng = createRng(`trivia|${config.seed}|${config.difficulty}|${config.region}`)
   const ctx: Context = { rng, difficulty: config.difficulty, used: new Map() }
 
-  const pool = config.only
-    ? config.only.flatMap((code) => {
-        const c = getCountry(code)
-        return c?.playable ? [c] : []
-      })
-    : playableIn(config.region)
+  const excluded = new Set(config.exclude ?? [])
+  const allowed = config.types?.length
+    ? QUESTION_TYPES.filter((t) => config.types?.includes(t))
+    : QUESTION_TYPES
+  const pool = (
+    config.only
+      ? config.only.flatMap((code) => {
+          const c = getCountry(code)
+          return c?.playable ? [c] : []
+        })
+      : playableIn(config.region)
+  ).filter((c) => !excluded.has(c.code))
   const count = Math.min(config.count ?? QUESTIONS_PER_GAME, QUESTIONS_PER_GAME, pool.length)
 
   // Cada tipo sale al menos una vez si se puede; el resto, al azar.
-  const plan = rng.shuffle(QUESTION_TYPES)
-  while (plan.length < count) plan.push(rng.pick(QUESTION_TYPES))
+  const plan = rng.shuffle(allowed)
+  while (plan.length < count) plan.push(rng.pick(allowed))
 
   const subjects = rng.shuffle(pool)
   const usedSubjects = new Set<string>()
@@ -285,7 +290,7 @@ export function generateTrivia(config: TriviaConfig): Question[] {
   for (let slot = 0; slot < plan.length && questions.length < count; slot++) {
     const preferred = plan[slot] as QuestionType
     // Si el tipo planeado no encaja con ningún país libre, se prueba con los demás.
-    const types = [preferred, ...rng.shuffle(QUESTION_TYPES.filter((t) => t !== preferred))]
+    const types = [preferred, ...rng.shuffle(allowed.filter((t) => t !== preferred))]
     // Primero los países que menos han salido como opción en preguntas anteriores.
     const ordered = [...subjects].sort(
       (a, b) => (ctx.used.get(a.code) ?? 0) - (ctx.used.get(b.code) ?? 0),

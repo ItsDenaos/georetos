@@ -9,13 +9,20 @@ import { playableIn } from '@/lib/countries'
 import { REGIONS } from '@/lib/regions'
 import { newSeed } from '@/lib/rng'
 import type { Difficulty, RegionId } from '@/lib/types'
-import { triviaQuery } from '@/lib/urlConfig'
+import { runQuery, triviaQuery } from '@/lib/urlConfig'
+import { VARIANTS, type Variant } from '@/lib/variants'
 
 const router = useRouter()
+const variant = ref<Variant>('clasica')
 const difficulty = ref<Difficulty>('facil')
 const region = ref<RegionId>('mundo')
 const timer = ref(false)
 
+const variantOptions = VARIANTS.map((v) => ({
+  value: v,
+  label: es.variants.labels[v],
+  hint: es.variants.hints.trivia[v],
+}))
 const difficultyOptions = (['facil', 'media', 'dificil'] as const).map((d) => ({
   value: d,
   label: es.difficulties[d],
@@ -27,12 +34,29 @@ const regionOptions = REGIONS.map((r) => ({
   hint: es.setup.countryCount(playableIn(r).length),
 }))
 
-const summary = computed(() => [
-  `${es.difficulties[difficulty.value]} · ${es.regions[region.value]}`,
-  ...(timer.value ? [`${es.setup.timer} · ${es.setup.timerHint}`] : []),
-])
+const summary = computed(() => {
+  if (variant.value === 'supervivencia') {
+    return [es.variants.labels.supervivencia, es.variants.hints.trivia.supervivencia]
+  }
+  const base = `${es.difficulties[difficulty.value]} · ${es.regions[region.value]}`
+  if (variant.value === 'contrarreloj') {
+    return [base, `${es.variants.labels.contrarreloj} · ${es.variants.hints.trivia.contrarreloj}`]
+  }
+  return [base, ...(timer.value ? [`${es.setup.timer} · ${es.setup.timerHint}`] : [])]
+})
 
 function start() {
+  if (variant.value !== 'clasica') {
+    const query = runQuery({
+      mode: 'trivia',
+      variant: variant.value,
+      region: region.value,
+      difficulty: difficulty.value,
+      seed: newSeed(),
+    })
+    void router.push({ query })
+    return
+  }
   void router.push({
     query: triviaQuery({
       difficulty: difficulty.value,
@@ -53,23 +77,37 @@ function start() {
     @start="start"
   >
     <ChoiceGroup
-      v-model="difficulty"
+      v-model="variant"
       :step="1"
-      :legend="es.setup.difficulty"
-      :options="difficultyOptions"
+      :legend="es.variants.legend"
+      :options="variantOptions"
     />
-    <ChoiceGroup
-      v-model="region"
-      :step="2"
-      :legend="es.setup.regionOptional"
-      :options="regionOptions"
-    />
-    <fieldset>
+    <p
+      v-if="variant === 'supervivencia'"
+      class="max-w-md rounded-xl border-2 border-dashed border-ink px-4 py-3 text-sm text-ink-soft"
+    >
+      {{ es.variants.survivalNote }}
+    </p>
+    <template v-else>
+      <ChoiceGroup
+        v-model="difficulty"
+        :step="2"
+        :legend="es.setup.difficulty"
+        :options="difficultyOptions"
+      />
+      <ChoiceGroup
+        v-model="region"
+        :step="3"
+        :legend="es.setup.regionOptional"
+        :options="regionOptions"
+      />
+    </template>
+    <fieldset v-if="variant === 'clasica'">
       <legend class="mb-3 flex items-center gap-2">
         <span
-          class="grid size-7 place-items-center rounded-full border-2 border-ink bg-sun font-mono text-xs font-semibold"
+          class="grid size-7 place-items-center rounded-full border-2 border-ink bg-sun font-mono text-xs font-semibold text-carbon"
           aria-hidden="true"
-          >03</span
+          >04</span
         >
         <span class="label-mono">{{ es.setup.timer }}</span>
       </legend>

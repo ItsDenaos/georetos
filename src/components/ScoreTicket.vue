@@ -24,13 +24,13 @@ watch(
   <span class="relative inline-flex">
     <span
       :key="bumpKey"
-      class="inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-sun px-2.5 py-0.5 font-mono text-sm font-semibold shadow-ink-sm"
+      class="inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-sun px-2.5 py-0.5 font-mono text-sm font-semibold text-carbon shadow-ink-sm"
       :class="bumpKey > 0 && 'animate-pop'"
     >
       <svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
         <path
           d="M8 1.5l1.9 4 4.4.5-3.3 3 .9 4.3L8 11.1l-3.9 2.2.9-4.3-3.3-3 4.4-.5z"
-          fill="var(--color-ink)"
+          fill="currentColor"
         />
       </svg>
       {{ es.locate.pointsShort(score) }}

@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import type { GameResult } from '@/lib/results'
 import { readJson, writeJson } from '@/lib/storage'
 
-const STORAGE_KEY = 'georetos:v1:ultimo-resultado'
+export const STORAGE_KEY = 'georetos:v1:ultimo-resultado'
 
 /** Resultado de la última partida (en sessionStorage, para sobrevivir a una recarga). */
 export const useResultStore = defineStore('result', () => {

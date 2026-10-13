@@ -5,7 +5,7 @@
 import { SILHOUETTE_ATTEMPTS } from './silhouetteRules'
 import { readJson, writeJson } from './storage'
 
-const STORAGE_KEY = 'georetos:v1:silueta-diaria'
+export const STORAGE_KEY = 'georetos:v1:silueta-diaria'
 /** Días que se guardan (los más recientes). */
 const KEEP_DAYS = 60
 

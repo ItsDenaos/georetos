@@ -39,8 +39,8 @@ const barProgress = computed(() =>
           <svg viewBox="0 0 24 24" class="size-4">
             <path
               d="M3 11.5L21 4l-5 16-4.5-6.5z"
-              fill="var(--color-paper-light)"
-              stroke="var(--color-ink)"
+              fill="var(--color-cream)"
+              stroke="var(--color-carbon)"
               stroke-width="1.8"
               stroke-linejoin="round"
             />
@@ -52,7 +52,7 @@ const barProgress = computed(() =>
             <path
               d="M2.5 6.2l2.2 2.2L9.5 3.6"
               fill="none"
-              stroke="white"
+              stroke="var(--color-cream)"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -61,14 +61,14 @@ const barProgress = computed(() =>
         </span>
         <span v-else-if="marks[i - 1] === 'meh'" class="stop bg-sun">
           <svg viewBox="0 0 12 12" class="size-2.5">
-            <path d="M3 6h6" stroke="var(--color-ink)" stroke-width="2" stroke-linecap="round" />
+            <path d="M3 6h6" stroke="var(--color-carbon)" stroke-width="2" stroke-linecap="round" />
           </svg>
         </span>
         <span v-else-if="marks[i - 1] === 'fail'" class="stop stop-fail bg-tomato">
           <svg viewBox="0 0 12 12" class="size-2.5 -rotate-45">
             <path
               d="M3.5 3.5l5 5M8.5 3.5l-5 5"
-              stroke="white"
+              stroke="var(--color-cream)"
               stroke-width="2"
               stroke-linecap="round"
             />
@@ -142,7 +142,7 @@ const barProgress = computed(() =>
   border: 2px solid var(--color-ink);
   border-radius: 9999px;
   background: var(--color-cobalt);
-  box-shadow: 2px 2px 0 0 var(--color-ink);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
 }
 
 .stop-current::after {

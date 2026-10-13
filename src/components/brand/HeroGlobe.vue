@@ -23,7 +23,7 @@ const PIN_COLORS = ['var(--color-jade)', 'var(--color-pink)', 'var(--color-sun)'
         <circle cx="180" cy="165" r="110" />
       </clipPath>
       <pattern :id="`${id}-dots`" width="7" height="7" patternUnits="userSpaceOnUse">
-        <circle cx="3.5" cy="3.5" r="1.25" fill="var(--color-ink)" opacity="0.38" />
+        <circle cx="3.5" cy="3.5" r="1.25" fill="var(--color-carbon)" opacity="0.38" />
       </pattern>
       <mask :id="`${id}-shade`">
         <circle cx="180" cy="165" r="110" fill="white" />
@@ -37,11 +37,11 @@ const PIN_COLORS = ['var(--color-jade)', 'var(--color-pink)', 'var(--color-sun)'
         <path
           d="M-12-8L14 0-12 8-7 0Z"
           fill="var(--color-pink)"
-          stroke="var(--color-ink)"
+          stroke="var(--color-carbon)"
           stroke-width="1.8"
           stroke-linejoin="round"
         />
-        <path d="M-7 0H14" stroke="var(--color-ink)" stroke-width="1.2" />
+        <path d="M-7 0H14" stroke="var(--color-carbon)" stroke-width="1.2" />
       </g>
     </defs>
 
@@ -74,7 +74,7 @@ const PIN_COLORS = ['var(--color-jade)', 'var(--color-pink)', 'var(--color-sun)'
       <path
         :d="HERO_GLOBE.graticule"
         fill="none"
-        stroke="var(--color-paper-light)"
+        stroke="var(--color-cream)"
         stroke-width="1.3"
         opacity="0.45"
       />
@@ -83,7 +83,7 @@ const PIN_COLORS = ['var(--color-jade)', 'var(--color-pink)', 'var(--color-sun)'
       <path
         :d="HERO_GLOBE.land"
         fill="var(--color-sun)"
-        stroke="var(--color-ink)"
+        stroke="var(--color-carbon)"
         stroke-width="1.7"
         stroke-linejoin="round"
       />
@@ -96,14 +96,14 @@ const PIN_COLORS = ['var(--color-jade)', 'var(--color-pink)', 'var(--color-sun)'
         :mask="`url(#${id}-shade)`"
       />
     </g>
-    <circle cx="180" cy="165" r="110" fill="none" stroke="var(--color-ink)" stroke-width="3.2" />
+    <circle cx="180" cy="165" r="110" fill="none" stroke="var(--color-carbon)" stroke-width="3.2" />
 
     <!-- Alfileres -->
-    <g stroke="var(--color-ink)" stroke-width="2.4" stroke-linejoin="round">
+    <g stroke="var(--color-carbon)" stroke-width="2.4" stroke-linejoin="round">
       <g v-for="([x, y], i) in HERO_GLOBE.pins" :key="i" :transform="`translate(${x} ${y})`">
         <g class="pin" :style="{ animationDelay: `${-0.85 * i}s` }">
           <path :d="PIN" :fill="PIN_COLORS[i]" />
-          <circle cy="-17" r="3.6" fill="var(--color-paper-light)" stroke-width="1.8" />
+          <circle cy="-17" r="3.6" fill="var(--color-cream)" stroke-width="1.8" />
         </g>
       </g>
     </g>

@@ -23,6 +23,7 @@
 
   --color-cobalt: #2f4fd1;
   --color-cobalt-deep: #2238a3;
+  --color-cobalt-ink: #2f4fd1;
   --color-cobalt-light: #dde4ff;
   --color-pink: #ff5fa2;
   --color-pink-ink: #c2276f;
@@ -38,10 +39,15 @@
   --color-tomato-light: #ffe1da;
   --color-sea: #bfe3ea;
   --color-sand: #f7e2ae;
+  /* Sombra dura de imprenta (en oscuro, casi negra). */
+  --color-shadow: #1b1f3b;
+  /* Tintas fijas, iguales en los dos temas: texto sobre fondos de color. */
+  --color-carbon: #1b1f3b;
+  --color-cream: #fffbf1;
 
-  --shadow-ink-sm: 2px 2px 0 0 #1b1f3b;
-  --shadow-ink: 4px 4px 0 0 #1b1f3b;
-  --shadow-ink-lg: 7px 7px 0 0 #1b1f3b;
+  --shadow-ink-sm: 2px 2px 0 0 var(--color-shadow);
+  --shadow-ink: 4px 4px 0 0 var(--color-shadow);
+  --shadow-ink-lg: 7px 7px 0 0 var(--color-shadow);
 
   --animate-pop: pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
   --animate-shake: shake 380ms ease-in-out;
@@ -140,6 +146,79 @@
   --map-pattern-ink: rgb(27 31 59 / 0.35);
 }
 
+/*
+ * Modo oscuro, "atlas nocturno": papel azul noche y tinta crema. Los colores
+ * tienen significado (paper = superficie, ink = texto y bordes, *-ink = texto de
+ * color, *-light = fondos suaves), así que basta con reasignarlos. El tema lo
+ * pone en <html data-theme> un script de index.html antes de pintar.
+ * Si cambias un valor, src/__tests__/contrast.spec.ts revisa el contraste.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-paper: #12152a;
+  --color-paper-light: #1c2040;
+  --color-paper-deep: #0b0e20;
+  --color-ink: #f4ecd8;
+  --color-ink-soft: #b9b5cc;
+  --color-shadow: #03040b;
+  --color-cobalt: #3a59e8;
+  --color-cobalt-deep: #283fae;
+  --color-cobalt-ink: #a9b8ff;
+  --color-cobalt-light: #262e63;
+  --color-pink-ink: #ff8ec2;
+  --color-pink-light: #3e1c36;
+  --color-sun-ink: #ffd56e;
+  --color-sun-light: #392f14;
+  --color-jade-ink: #72e0b7;
+  --color-jade-light: #10372d;
+  --color-tomato-ink: #ff9d8a;
+  --color-tomato-light: #3e1c19;
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .96 0 0 0 0 .93 0 0 0 0 .85 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --map-ocean: #17325a;
+  --map-ocean-ink: #2b5a8a;
+  --map-graticule: rgb(244 236 216 / 0.12);
+  --map-land: #d6c491;
+  --map-muted: #8a836b;
+  --map-dim: #32385a;
+  --map-border: rgb(3 4 11 / 0.65);
+  --map-border-strong: #03040b;
+  --map-ok: #2bbd8c;
+  --map-fail: #ff6a52;
+  --map-wrong: #ff8b78;
+  --map-focus: #8da0ff;
+  --map-related: #56649f;
+  --map-pattern-ink: rgb(3 4 11 / 0.45);
+}
+
+/*
+ * "Islas impresas": carteles, ilustraciones y fichas de color se ven igual en
+ * los dos temas. Repite los valores claros de @theme (contrast.spec.ts comprueba
+ * que coincidan).
+ */
+:root[data-theme='dark'] .theme-light {
+  color-scheme: light;
+  --color-paper: #f6f0e1;
+  --color-paper-light: #fffbf1;
+  --color-paper-deep: #ebe1c8;
+  --color-ink: #1b1f3b;
+  --color-ink-soft: #4b4f6b;
+  --color-shadow: #1b1f3b;
+  --color-cobalt: #2f4fd1;
+  --color-cobalt-deep: #2238a3;
+  --color-cobalt-ink: #2f4fd1;
+  --color-cobalt-light: #dde4ff;
+  --color-pink-ink: #c2276f;
+  --color-pink-light: #ffe1ee;
+  --color-sun-ink: #7f5300;
+  --color-sun-light: #fff1c4;
+  --color-jade-ink: #0b6b4f;
+  --color-jade-light: #d4f3e6;
+  --color-tomato-ink: #b12f1d;
+  --color-tomato-light: #ffe1da;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
@@ -165,7 +244,7 @@ body {
   }
   ::selection {
     background: var(--color-pink);
-    color: var(--color-ink);
+    color: var(--color-carbon);
   }
 }
 
@@ -176,21 +255,21 @@ body {
   @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-ink px-5 text-base font-bold shadow-ink transition-[transform,box-shadow,background-color] duration-150 select-none disabled:pointer-events-none disabled:opacity-45;
   &:hover {
     transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 0 var(--color-ink);
+    box-shadow: 5px 5px 0 0 var(--color-shadow);
   }
   &:active {
     transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 0 var(--color-ink);
+    box-shadow: 1px 1px 0 0 var(--color-shadow);
   }
 }
 @utility btn-primary {
-  @apply btn bg-cobalt text-paper-light;
+  @apply btn bg-cobalt text-cream;
 }
 @utility btn-secondary {
   @apply btn bg-paper-light text-ink;
 }
 @utility btn-accent {
-  @apply btn bg-sun text-ink;
+  @apply btn bg-sun text-carbon;
 }
 @utility btn-ghost {
   @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 font-bold text-ink underline decoration-2 underline-offset-4 decoration-pink transition hover:bg-paper-deep/60 disabled:pointer-events-none disabled:opacity-45;
@@ -215,8 +294,12 @@ body {
 /* Retícula de meridianos y paralelos muy tenue. */
 @utility graticule-bg {
   background-image:
-    linear-gradient(rgb(27 31 59 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(27 31 59 / 0.06) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--color-ink) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-ink) 6%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 34px 34px;
 }
 

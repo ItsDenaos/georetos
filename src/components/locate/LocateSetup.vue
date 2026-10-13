@@ -10,14 +10,21 @@ import type { LocateCount } from '@/lib/locate'
 import { REGIONS } from '@/lib/regions'
 import { newSeed } from '@/lib/rng'
 import type { RegionId } from '@/lib/types'
-import { locateQuery } from '@/lib/urlConfig'
+import { locateQuery, runQuery } from '@/lib/urlConfig'
+import { VARIANTS, type Variant } from '@/lib/variants'
 
 type CountChoice = '10' | '20' | 'todos'
 
 const router = useRouter()
+const variant = ref<Variant>('clasica')
 const region = ref<RegionId>('mundo')
 const count = ref<CountChoice>('10')
 
+const variantOptions = VARIANTS.map((v) => ({
+  value: v,
+  label: es.variants.labels[v],
+  hint: es.variants.hints.locate[v],
+}))
 const regionOptions = REGIONS.map((r) => ({
   value: r,
   label: es.regions[r],
@@ -37,16 +44,39 @@ watch(countOptions, (options) => {
   if (!options.some((o) => o.value === count.value)) count.value = options[0]?.value ?? 'todos'
 })
 
-const summary = computed(() => [
-  es.regions[region.value],
-  count.value === 'todos'
-    ? es.setup.countAll(available.value)
-    : es.setup.countryCount(Number(count.value)),
-])
+const summary = computed(() => {
+  if (variant.value === 'supervivencia') {
+    return [es.variants.labels.supervivencia, es.variants.hints.locate.supervivencia]
+  }
+  if (variant.value === 'contrarreloj') {
+    return [
+      `${es.variants.labels.contrarreloj} · ${es.regions[region.value]}`,
+      es.variants.hints.locate.contrarreloj,
+    ]
+  }
+  return [
+    es.regions[region.value],
+    count.value === 'todos'
+      ? es.setup.countAll(available.value)
+      : es.setup.countryCount(Number(count.value)),
+  ]
+})
 
 function start() {
+  const seed = newSeed()
+  if (variant.value !== 'clasica') {
+    const query = runQuery({
+      mode: 'locate',
+      variant: variant.value,
+      region: region.value,
+      difficulty: 'media',
+      seed,
+    })
+    void router.push({ query })
+    return
+  }
   const n: LocateCount = count.value === 'todos' ? 'todos' : (Number(count.value) as 10 | 20)
-  void router.push({ query: locateQuery({ region: region.value, count: n, seed: newSeed() }) })
+  void router.push({ query: locateQuery({ region: region.value, count: n, seed }) })
 }
 </script>
 
@@ -58,7 +88,31 @@ function start() {
     :summary="summary"
     @start="start"
   >
-    <ChoiceGroup v-model="region" :step="1" :legend="es.setup.region" :options="regionOptions" />
-    <ChoiceGroup v-model="count" :step="2" :legend="es.setup.count" :options="countOptions" />
+    <ChoiceGroup
+      v-model="variant"
+      :step="1"
+      :legend="es.variants.legend"
+      :options="variantOptions"
+    />
+    <p
+      v-if="variant === 'supervivencia'"
+      class="max-w-md rounded-xl border-2 border-dashed border-ink px-4 py-3 text-sm text-ink-soft"
+    >
+      {{ es.variants.survivalNote }}
+    </p>
+    <ChoiceGroup
+      v-else
+      v-model="region"
+      :step="2"
+      :legend="es.setup.region"
+      :options="regionOptions"
+    />
+    <ChoiceGroup
+      v-if="variant === 'clasica'"
+      v-model="count"
+      :step="3"
+      :legend="es.setup.count"
+      :options="countOptions"
+    />
   </SetupLayout>
 </template>

@@ -29,3 +29,11 @@ export function writeJson(key: string, value: unknown, kind: StorageKind = 'loca
     // Sin espacio o almacenamiento bloqueado: se ignora.
   }
 }
+
+export function removeKey(key: string, kind: StorageKind = 'local'): void {
+  try {
+    getStorage(kind)?.removeItem(key)
+  } catch {
+    // Almacenamiento bloqueado: no hay nada que borrar.
+  }
+}

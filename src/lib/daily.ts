@@ -30,9 +30,14 @@ export interface DailyChallenge {
   seed: string
 }
 
+/** Número de día de una fecha "AAAA-MM-DD" (el día del reto nº 1 es el 1). Sirve para rachas. */
+export function dayNumber(key: string): number {
+  return daysBetween(DAILY_EPOCH, key) + 1
+}
+
 export function dailyChallenge(date: Date = new Date()): DailyChallenge {
   const key = localDateKey(date)
-  return { key, number: daysBetween(DAILY_EPOCH, key) + 1, seed: `diario-${key}` }
+  return { key, number: dayNumber(key), seed: `diario-${key}` }
 }
 
 /**

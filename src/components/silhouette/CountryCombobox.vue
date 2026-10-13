@@ -92,7 +92,7 @@ defineExpose({ focus: () => input.value?.focus() })
         autocorrect="off"
         spellcheck="false"
         enterkeyhint="go"
-        class="min-h-13 w-full min-w-0 flex-1 rounded-xl border-2 border-ink bg-paper-light px-4 text-lg font-semibold shadow-ink-sm placeholder:font-normal placeholder:text-ink-soft/70 focus:bg-white disabled:opacity-50"
+        class="min-h-13 w-full min-w-0 flex-1 rounded-xl border-2 border-ink bg-paper-light px-4 text-lg font-semibold shadow-ink-sm placeholder:font-normal placeholder:text-ink-soft/70 disabled:opacity-50"
         @keydown="onKeydown"
         @blur="open = false"
         @focus="open = query.trim() !== ''"
@@ -116,7 +116,7 @@ defineExpose({ focus: () => input.value?.focus() })
         role="option"
         :aria-selected="i === active"
         class="flex cursor-pointer items-center justify-between gap-3 border-b border-dashed border-ink/20 px-4 py-2.5 last:border-b-0"
-        :class="i === active ? 'bg-sun' : 'hover:bg-paper-deep'"
+        :class="i === active ? 'bg-sun text-carbon' : 'hover:bg-paper-deep'"
         @mousedown.prevent="choose(s.code)"
         @mousemove="active = i"
       >

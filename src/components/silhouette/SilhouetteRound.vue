@@ -125,7 +125,7 @@ defineExpose({ focus: () => combobox.value?.focus() })
         </div>
         <span
           v-if="points !== undefined"
-          class="shrink-0 rounded-lg border-2 border-ink bg-sun px-2.5 py-1 font-mono text-sm font-semibold shadow-ink-sm"
+          class="shrink-0 rounded-lg border-2 border-ink bg-sun px-2.5 py-1 font-mono text-sm font-semibold text-carbon shadow-ink-sm"
           >{{ es.silhouette.points(points) }}</span
         >
       </div>

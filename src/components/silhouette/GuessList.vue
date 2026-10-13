@@ -15,8 +15,8 @@ import { SILHOUETTE_ATTEMPTS, type Guess } from '@/lib/silhouette'
 const props = defineProps<{ guesses: readonly Guess[]; done: boolean }>()
 
 const CHIP: Record<Closeness, string> = {
-  hot: 'bg-tomato text-paper-light',
-  warm: 'bg-sun text-ink',
+  hot: 'bg-tomato text-carbon',
+  warm: 'bg-sun text-carbon',
   cool: 'bg-cobalt-light text-ink',
   cold: 'bg-paper-deep text-ink-soft',
 }

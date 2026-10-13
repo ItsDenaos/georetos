@@ -17,7 +17,7 @@ const name = useId()
     <legend class="mb-3 flex items-center gap-2">
       <span
         v-if="step"
-        class="grid size-7 place-items-center rounded-full border-2 border-ink bg-sun font-mono text-xs font-semibold"
+        class="grid size-7 place-items-center rounded-full border-2 border-ink bg-sun font-mono text-xs font-semibold text-carbon"
         aria-hidden="true"
         >{{ String(step).padStart(2, '0') }}</span
       >
@@ -30,7 +30,7 @@ const name = useId()
         class="tag group relative flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-ink px-3.5 py-2 transition-[transform,box-shadow,background-color] duration-150"
         :class="
           model === option.value
-            ? 'bg-cobalt text-paper-light shadow-ink'
+            ? 'bg-cobalt text-cream shadow-ink'
             : 'bg-paper-light text-ink shadow-ink-sm hover:-translate-x-px hover:-translate-y-px hover:shadow-ink'
         "
       >
@@ -52,7 +52,7 @@ const name = useId()
           <path
             d="M4.8 8.3l2.1 2.1 4.3-4.6"
             fill="none"
-            stroke="var(--color-ink)"
+            stroke="var(--color-carbon)"
             stroke-width="1.8"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -63,7 +63,7 @@ const name = useId()
           <span
             v-if="option.hint"
             class="font-mono text-[0.68rem] tracking-wide"
-            :class="model === option.value ? 'text-cobalt-light' : 'text-ink-soft'"
+            :class="model === option.value ? 'text-cream/80' : 'text-ink-soft'"
             >{{ option.hint }}</span
           >
         </span>

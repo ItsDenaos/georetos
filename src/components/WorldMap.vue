@@ -526,7 +526,7 @@ defineExpose({ reset: () => applyView(true) })
   border-radius: 0.7rem;
   background: var(--color-paper-light);
   color: var(--color-ink);
-  box-shadow: 2px 2px 0 0 var(--color-ink);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
   transition:
     transform 120ms ease,
     box-shadow 120ms ease;
@@ -534,6 +534,7 @@ defineExpose({ reset: () => applyView(true) })
 
 .map-btn:hover {
   background: var(--color-sun);
+  color: var(--color-carbon);
 }
 
 .map-btn:active {

@@ -40,12 +40,20 @@ describe('puntaje de Trivia', () => {
 })
 
 describe('récords', () => {
+  const entry = (score: number, timeMs: number, maxScore = 10) => ({ score, maxScore, timeMs })
+
   it('gana el mayor puntaje y, si empatan, el menor tiempo', () => {
-    expect(isBetter({ score: 5, timeMs: 1000 }, undefined)).toBe(true)
-    expect(isBetter({ score: 6, timeMs: 9000 }, { score: 5, timeMs: 1000 })).toBe(true)
-    expect(isBetter({ score: 4, timeMs: 10 }, { score: 5, timeMs: 1000 })).toBe(false)
-    expect(isBetter({ score: 5, timeMs: 900 }, { score: 5, timeMs: 1000 })).toBe(true)
-    expect(isBetter({ score: 5, timeMs: 1000 }, { score: 5, timeMs: 1000 })).toBe(false)
+    expect(isBetter(entry(5, 1000), undefined)).toBe(true)
+    expect(isBetter(entry(6, 9000), entry(5, 1000))).toBe(true)
+    expect(isBetter(entry(4, 10), entry(5, 1000))).toBe(false)
+    expect(isBetter(entry(5, 900), entry(5, 1000))).toBe(true)
+    expect(isBetter(entry(5, 1000), entry(5, 1000))).toBe(false)
+  })
+
+  it('en las variantes, con los mismos aciertos gana la de menos fallos antes que la más corta', () => {
+    // 12 aciertos en 14 respuestas frente a 12 en 18: la segunda acabó antes por las penalizaciones.
+    expect(isBetter(entry(12, 60_000, 14), entry(12, 48_000, 18))).toBe(true)
+    expect(isBetter(entry(12, 48_000, 18), entry(12, 60_000, 14))).toBe(false)
   })
 })
 

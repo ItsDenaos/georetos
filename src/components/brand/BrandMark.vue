@@ -4,7 +4,13 @@ withDefaults(defineProps<{ size?: number }>(), { size: 40 })
 </script>
 
 <template>
-  <svg :width="size" :height="size" viewBox="0 0 48 48" aria-hidden="true" class="shrink-0">
+  <svg
+    :width="size"
+    :height="size"
+    viewBox="0 0 48 48"
+    aria-hidden="true"
+    class="theme-light shrink-0"
+  >
     <!-- Desfase de registro: la tinta rosa quedó corrida -->
     <circle cx="25.5" cy="26.5" r="18.5" fill="var(--color-pink)" />
     <circle

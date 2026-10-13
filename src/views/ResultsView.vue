@@ -3,30 +3,55 @@ import { computed, onMounted } from 'vue'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 
 import BrandMark from '@/components/brand/BrandMark.vue'
+import ChallengeDuel from '@/components/challenge/ChallengeDuel.vue'
+import ChallengeShare from '@/components/challenge/ChallengeShare.vue'
 import InkStamp from '@/components/brand/InkStamp.vue'
 import RouteBarcode from '@/components/brand/RouteBarcode.vue'
+import RouteProgress from '@/components/brand/RouteProgress.vue'
 import FlagImage from '@/components/FlagImage.vue'
 import StatusIcon from '@/components/StatusIcon.vue'
 import { useAnnouncer } from '@/composables/useAnnouncer'
 import { es } from '@/i18n/es'
 import type { GameResult } from '@/lib/results'
 import { newSeed } from '@/lib/rng'
-import { locateQuery, silhouetteQuery, triviaQuery } from '@/lib/urlConfig'
+import type { TypingMinutes } from '@/lib/typing'
+import { locateQuery, runQuery, silhouetteQuery, triviaQuery, typingQuery } from '@/lib/urlConfig'
+import { difficultyOfLevel, type RunVariant } from '@/lib/variants'
+import { duelOutcome } from '@/lib/challenge'
+import { useChallengeStore } from '@/stores/challenge'
 import { useResultStore } from '@/stores/result'
 
 const router = useRouter()
 const { announce } = useAnnouncer()
 const result = computed(() => useResultStore().last)
+/** El desafío aceptado para esta misma partida, si lo hay. */
+const challenge = computed(() =>
+  result.value ? useChallengeStore().forResult(result.value) : null,
+)
 
 const accuracy = computed(() =>
   result.value && result.value.total > 0 ? result.value.correct / result.value.total : 0,
 )
 
+/** Contrarreloj o Supervivencia (sin cantidad fija); null en la partida clásica. */
+const runVariant = computed<RunVariant | null>(() => {
+  const v = result.value?.variant
+  return v === 'contrarreloj' || v === 'supervivencia' ? v : null
+})
+
+const levelTitle = computed(() =>
+  runVariant.value === 'supervivencia' ? es.variants.reachedLevel : es.results.level,
+)
+
 const levelLabel = computed(() => {
   const r = result.value
   if (!r) return ''
+  if (runVariant.value === 'supervivencia')
+    return es.difficulties[difficultyOfLevel(r.reachedLevel ?? 0)]
+  if (runVariant.value === 'contrarreloj' && r.mode === 'locate') return es.variants.mixedLevel
   if (r.mode === 'trivia') return es.difficulties[r.difficulty ?? 'facil']
   if (r.mode === 'silhouette') return es.setup.silhouetteN(r.total)
+  if (r.mode === 'typing') return es.typing.minutes(Number(r.count))
   return r.count === 'todos' ? es.records.countAll : es.records.countN(r.count ?? r.total)
 })
 
@@ -44,9 +69,36 @@ const confetti = Array.from({ length: 14 }, (_, i) => ({
   round: i % 2 === 0,
 }))
 
+/** Escribe los países no tiene semilla: el código de barras se dibuja con el modo y la región. */
+const barcodeSeed = computed(() => {
+  const r = result.value
+  return r ? r.seed || `${r.mode}-${r.region}` : ''
+})
+
 /** Misma configuración con semilla nueva; `only` = solo esos países. */
 function gameLink(r: GameResult, only: string[] | undefined): RouteLocationRaw {
   const seed = newSeed()
+  // Escribe los países: se repite igual; los que faltaron se repasan ubicándolos en el mapa.
+  if (r.mode === 'typing') {
+    if (only)
+      return {
+        name: 'locate',
+        query: locateQuery({ region: r.region, count: 'todos', seed, only }),
+      }
+    const minutes = (r.count ?? 10) as TypingMinutes
+    return { name: 'typing', query: typingQuery({ region: r.region, minutes }) }
+  }
+  // Otra partida de la misma variante; el repaso de fallos es siempre clásico.
+  if (runVariant.value && !only && r.mode !== 'silhouette') {
+    const query = runQuery({
+      mode: r.mode,
+      variant: runVariant.value,
+      region: r.region,
+      difficulty: r.difficulty ?? 'media',
+      seed,
+    })
+    return { name: r.mode, query }
+  }
   if (r.mode === 'locate') {
     const count = r.count === 20 || r.count === 'todos' ? r.count : 10
     return { name: 'locate', query: locateQuery({ region: r.region, count, seed, only }) }
@@ -58,7 +110,7 @@ function gameLink(r: GameResult, only: string[] | undefined): RouteLocationRaw {
   return {
     name: 'trivia',
     query: triviaQuery({
-      difficulty: r.difficulty ?? 'facil',
+      difficulty: r.difficulty ?? (runVariant.value ? 'media' : 'facil'),
       region: r.region,
       timer: r.timer ?? false,
       seed,
@@ -89,9 +141,14 @@ onMounted(() => {
   announce(
     [
       es.results.headline(accuracy.value),
-      `${es.results.score}: ${r.score} / ${r.maxScore}`,
-      `${es.results.accuracy}: ${es.format.percent(accuracy.value)}`,
+      runVariant.value
+        ? es.variants.correctCount(r.score)
+        : `${es.results.score}: ${r.score} / ${r.maxScore}`,
+      `${runVariant.value ? es.variants.accuracy : es.results.accuracy}: ${es.format.percent(accuracy.value)}`,
       ...(r.isRecord ? [es.results.newRecord] : []),
+      ...(challenge.value
+        ? [es.challenge.outcomes[duelOutcome(r, challenge.value, Boolean(runVariant.value))]]
+        : []),
     ].join('. '),
   )
 })
@@ -100,16 +157,19 @@ onMounted(() => {
 <template>
   <div v-if="result" class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 pt-6 pb-14 sm:pt-10">
     <header class="animate-rise">
-      <p class="label-mono text-cobalt">{{ es.results.title }}</p>
+      <p class="label-mono text-cobalt-ink">{{ es.results.title }}</p>
       <h1 class="mt-1 font-display text-[2.6rem] leading-none font-extrabold sm:text-6xl">
         {{ es.results.headline(accuracy) }}
       </h1>
     </header>
 
+    <!-- Desafío: tu resultado junto al de quien te desafió -->
+    <ChallengeDuel v-if="challenge" :result="result" :challenge="challenge" />
+
     <!-- Pase de abordar -->
     <article class="pass relative animate-rise [animation-delay:80ms]">
       <header
-        class="flex items-center justify-between gap-3 rounded-t-[1.15rem] border-b-[2.5px] border-ink bg-cobalt px-5 py-3 text-paper-light"
+        class="flex items-center justify-between gap-3 rounded-t-[1.15rem] border-b-[2.5px] border-ink bg-cobalt px-5 py-3 text-cream"
       >
         <span class="flex items-center gap-2">
           <BrandMark :size="28" />
@@ -124,6 +184,9 @@ onMounted(() => {
           <p class="label-mono text-ink-soft">{{ es.results.mode }}</p>
           <p class="font-display text-[1.6rem] leading-[1.05] font-extrabold">
             {{ es.records[result.mode] }}
+          </p>
+          <p v-if="runVariant" class="label-mono mt-1 text-pink-ink">
+            {{ es.variants.labels[runVariant] }}
           </p>
         </div>
         <svg viewBox="0 0 64 24" class="mb-1 w-14 sm:w-20" aria-hidden="true">
@@ -153,7 +216,9 @@ onMounted(() => {
       <!-- Datos del viaje -->
       <dl class="grid grid-cols-3 gap-x-3 gap-y-4 px-5 py-5">
         <div>
-          <dt class="label-mono text-ink-soft">{{ es.results.accuracy }}</dt>
+          <dt class="label-mono text-ink-soft">
+            {{ runVariant ? es.variants.accuracy : es.results.accuracy }}
+          </dt>
           <dd class="font-mono text-lg font-semibold">{{ es.format.percent(accuracy) }}</dd>
         </div>
         <div>
@@ -161,10 +226,10 @@ onMounted(() => {
           <dd class="font-mono text-lg font-semibold">{{ es.format.duration(result.timeMs) }}</dd>
         </div>
         <div>
-          <dt class="label-mono text-ink-soft">{{ es.results.level }}</dt>
+          <dt class="label-mono text-ink-soft">{{ levelTitle }}</dt>
           <dd class="font-mono text-lg font-semibold">{{ levelLabel }}</dd>
         </div>
-        <div>
+        <div v-if="result.seed">
           <dt class="label-mono text-ink-soft">{{ es.results.route }}</dt>
           <dd class="font-mono text-lg font-semibold uppercase">{{ result.seed }}</dd>
         </div>
@@ -174,19 +239,32 @@ onMounted(() => {
         </div>
       </dl>
 
+      <!-- Cada pregunta como una parada de la ruta -->
+      <div v-if="result.answers?.length" class="px-5 pb-5">
+        <p class="label-mono text-ink-soft">{{ es.results.yourRoute }}</p>
+        <RouteProgress
+          :total="result.answers.length"
+          :current="result.answers.length"
+          :marks="result.answers.map((a) => a.mark)"
+        />
+      </div>
+
       <!-- Línea perforada -->
       <div class="perforation" aria-hidden="true" />
 
       <!-- Talón -->
       <div class="flex items-end gap-4 px-5 pt-4 pb-5">
         <div class="flex flex-col gap-1">
-          <RouteBarcode :seed="result.seed" class="h-12 w-32 sm:w-40" />
-          <span class="sr-only">{{ es.results.barcodeLabel(result.seed) }}</span>
+          <RouteBarcode :seed="barcodeSeed" class="h-12 w-32 sm:w-40" />
+          <span v-if="result.seed" class="sr-only">{{ es.results.barcodeLabel(result.seed) }}</span>
         </div>
         <div class="ml-auto text-right">
-          <p class="label-mono text-ink-soft">{{ es.results.score }}</p>
+          <p class="label-mono text-ink-soft">
+            {{ runVariant ? es.variants.scoreLabel : es.results.score }}
+          </p>
           <p class="font-display text-6xl leading-none font-extrabold">
-            {{ result.score }}<span class="text-2xl text-ink-soft">/{{ result.maxScore }}</span>
+            {{ result.score
+            }}<span v-if="!runVariant" class="text-2xl text-ink-soft">/{{ result.maxScore }}</span>
           </p>
         </div>
       </div>
@@ -203,7 +281,7 @@ onMounted(() => {
             :style="{ '--a': `${c.angle}deg`, '--d': `${c.distance}px`, background: c.color }"
             aria-hidden="true"
           />
-          <InkStamp tone="pink" size="lg" :rotate="-9">{{ es.results.newRecord }}</InkStamp>
+          <InkStamp tone="pink" :rotate="-9">{{ es.results.newRecord }}</InkStamp>
         </span>
       </div>
     </article>
@@ -220,13 +298,15 @@ onMounted(() => {
 
     <div class="flex flex-col gap-3 sm:flex-row">
       <RouterLink v-if="reviewLink" :to="reviewLink" class="btn-accent flex-1">
-        {{ es.results.reviewMisses }}
+        {{ result.mode === 'typing' ? es.typing.reviewOnMap : es.results.reviewMisses }}
       </RouterLink>
       <RouterLink v-if="replayLink" :to="replayLink" class="btn-primary flex-1">
         {{ es.results.playAgain }}
       </RouterLink>
       <RouterLink to="/" class="btn-ghost">{{ es.results.home }}</RouterLink>
     </div>
+
+    <ChallengeShare v-if="!result.review" :result="result" :reply="Boolean(challenge)" />
 
     <!-- Por visitar -->
     <section class="card overflow-hidden" aria-labelledby="por-visitar">
@@ -272,14 +352,14 @@ onMounted(() => {
   border: 2.5px solid var(--color-ink);
   border-radius: 1.3rem;
   background: var(--color-paper-light);
-  box-shadow: 7px 7px 0 0 var(--color-ink);
+  box-shadow: 7px 7px 0 0 var(--color-shadow);
 }
 
 /* Perforación con muescas a los lados, como un pase de verdad */
 .perforation {
   position: relative;
   height: 0;
-  border-top: 2.5px dashed rgb(27 31 59 / 0.45);
+  border-top: 2.5px dashed color-mix(in srgb, var(--color-ink) 45%, transparent);
   margin: 0 1.1rem;
 }
 .perforation::before,

@@ -16,7 +16,8 @@
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/ scripts/"
+    "format": "prettier --write --experimental-cli src/ scripts/",
+    "build:icons": "pwa-assets-generator"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
@@ -45,6 +46,7 @@
     "@types/node": "^24.13.4",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
+    "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/eslint-plugin": "^1.6.27",
     "@vue/eslint-config-typescript": "^14.9.0",
@@ -62,10 +64,13 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.0",
     "vite": "^8.2.2",
+    "vite-plugin-pwa": "^2.0.0",
     "vite-plugin-vue-devtools": "^8.2.1",
     "vitest": "^5.0.4",
     "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.3.11",
+    "workbox-build": "^7.4.1",
+    "workbox-window": "^7.4.1",
     "world-countries": "^5.1.0"
   },
   "engines": {

@@ -10,7 +10,7 @@ import { es } from '@/i18n/es'
 import { getCountry } from '@/lib/countries'
 import { compassPoint } from '@/lib/geo'
 import { roundState, type SilhouetteConfig } from '@/lib/silhouette'
-import { useProgressStore } from '@/stores/progress'
+import { finishGame } from '@/stores/stats'
 import { useResultStore } from '@/stores/result'
 import { useSilhouetteStore } from '@/stores/silhouette'
 import SilhouetteRound from './SilhouetteRound.vue'
@@ -67,7 +67,7 @@ watch(
     if (!finished) return
     const partial = store.buildResult()
     if (!partial) return
-    useResultStore().set(useProgressStore().register(partial))
+    useResultStore().set(finishGame(partial))
     void router.push({ name: 'results' })
   },
   { immediate: true },

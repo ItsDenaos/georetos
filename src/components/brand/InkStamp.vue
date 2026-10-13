@@ -27,9 +27,9 @@ withDefaults(defineProps<{ tone?: InkTone; rotate?: number; size?: 'md' | 'lg' }
   padding: 0.35em 0.8em;
   border: 3px solid currentColor;
   border-radius: 0.6rem;
-  background: rgb(255 251 241 / 0.94);
+  background: color-mix(in srgb, var(--color-paper-light) 94%, transparent);
   box-shadow:
-    inset 0 0 0 2px rgb(255 251 241 / 0.94),
+    inset 0 0 0 2px color-mix(in srgb, var(--color-paper-light) 94%, transparent),
     inset 0 0 0 3.5px currentColor;
   font-family: var(--font-mono);
   font-weight: 600;

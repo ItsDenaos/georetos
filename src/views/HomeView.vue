@@ -4,16 +4,24 @@ import { RouterLink } from 'vue-router'
 
 import HeroGlobe from '@/components/brand/HeroGlobe.vue'
 import PassportStamp from '@/components/brand/PassportStamp.vue'
+import DayTicket from '@/components/DayTicket.vue'
 import PosterLocateArt from '@/components/brand/PosterLocateArt.vue'
 import PosterSilhouetteArt from '@/components/brand/PosterSilhouetteArt.vue'
 import PosterTriviaArt from '@/components/brand/PosterTriviaArt.vue'
+import PosterTypingArt from '@/components/brand/PosterTypingArt.vue'
 import type { StampTone } from '@/components/brand/types'
 import { es } from '@/i18n/es'
 import { dailyChallenge } from '@/lib/daily'
+import {
+  dailyChallengeStreak,
+  dailyChallengeSummary,
+  readDailyChallengeDays,
+} from '@/lib/dailyChallengeRecord'
+import { DAILY_LENGTH, DAILY_MAX_SCORE } from '@/lib/dailyChallengeRules'
 import { dailySummary, readDailyEntries } from '@/lib/dailyRecord'
-import { parseRecordKey, type GameMode } from '@/lib/results'
+import { describeRecord } from '@/lib/recordLabels'
+import type { GameMode } from '@/lib/results'
 import { hashSeed } from '@/lib/rng'
-import type { Difficulty } from '@/lib/types'
 import { useProgressStore } from '@/stores/progress'
 
 const TOTAL_COUNTRIES = 195
@@ -21,6 +29,7 @@ const MODE_TONE: Record<GameMode, StampTone> = {
   locate: 'cobalt',
   trivia: 'pink',
   silhouette: 'tomato',
+  typing: 'sun',
 }
 
 const progress = useProgressStore()
@@ -28,37 +37,31 @@ const progress = useProgressStore()
 // Estado del reto diario leído directamente del registro: la portada no carga los países.
 const today = dailyChallenge()
 const daily = dailySummary(readDailyEntries()[today.key])
+const challengeDays = readDailyChallengeDays()
+const todayChallenge = challengeDays[today.key]
+const challenge = dailyChallengeSummary(
+  todayChallenge?.number === today.number ? todayChallenge : undefined,
+  DAILY_LENGTH,
+)
+const challengeStreak = dailyChallengeStreak(challengeDays, today.number)
 
 const stamps = computed(() =>
   Object.entries(progress.records)
     .map(([key, entry]) => {
-      const { mode, region, level } = parseRecordKey(key)
-      const regionLabel = es.regions[region] ?? region
-      const levelLabel =
-        mode === 'trivia'
-          ? (es.difficulties[level as Difficulty] ?? level)
-          : mode === 'silhouette'
-            ? es.setup.silhouetteN(Number(level))
-            : level === 'todos'
-              ? es.records.countAll
-              : es.records.countN(Number(level))
-      const modeLabel = es.records[mode] ?? mode
-      const perfect = entry.score === entry.maxScore
-      const tone: StampTone = perfect ? 'jade' : (MODE_TONE[mode] ?? 'cobalt')
-      const score = `${entry.score}/${entry.maxScore}`
-      const date = es.format.date(entry.date)
+      const r = describeRecord(key, entry)
+      const tone: StampTone = r.perfect ? 'jade' : (MODE_TONE[r.mode] ?? 'cobalt')
       return {
         key,
-        date: entry.date,
-        top: modeLabel.toUpperCase(),
-        bottom: regionLabel.toUpperCase(),
-        score,
-        detail: levelLabel.toUpperCase(),
-        dateLabel: date.toUpperCase(),
+        date: r.date,
+        top: r.title.toUpperCase(),
+        bottom: r.regionLabel.toUpperCase(),
+        score: r.score,
+        detail: r.level.toUpperCase(),
+        dateLabel: r.dateLabel.toUpperCase(),
         tone,
         // Cada sello cae con un giro distinto, pero siempre el mismo para el mismo récord.
         rotate: (hashSeed(key) % 21) - 10,
-        label: es.home.stampLabel(modeLabel, regionLabel, levelLabel, score, date),
+        label: es.home.stampLabel(r.title, r.regionLabel, r.level, r.scoreLabel, r.dateLabel),
       }
     })
     .sort((a, b) => b.date.localeCompare(a.date)),
@@ -81,7 +84,7 @@ const stamps = computed(() =>
         </p>
         <h1 class="font-display mt-5 text-[3.1rem] leading-[0.92] font-extrabold sm:text-7xl">
           {{ es.home.titleStart }}
-          <span class="relative inline-block whitespace-nowrap text-cobalt italic">
+          <span class="relative inline-block whitespace-nowrap text-cobalt-ink italic">
             <span class="riso-shadow">{{ es.home.titleEmphasis }}</span>
             <svg
               viewBox="0 0 200 14"
@@ -105,48 +108,52 @@ const stamps = computed(() =>
       </div>
     </section>
 
-    <!-- Reto diario: boleto con talón -->
-    <RouterLink
-      to="/silueta/diario"
-      class="ticket group flex items-stretch overflow-hidden rounded-2xl border-[2.5px] border-ink bg-pink-light shadow-ink animate-rise [animation-delay:140ms]"
-    >
-      <span
-        class="flex w-20 shrink-0 flex-col items-center justify-center gap-0.5 border-r-[2.5px] border-dashed border-ink bg-pink sm:w-28"
-        aria-hidden="true"
-      >
-        <span class="label-mono text-[0.6rem]">Nº</span>
-        <span class="font-display text-4xl leading-none font-extrabold sm:text-5xl">{{
-          today.number
-        }}</span>
-      </span>
-      <span class="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4 py-3">
-        <span class="label-mono text-pink-ink">{{ es.home.dailyKicker(today.number) }}</span>
-        <span class="font-display text-xl leading-tight font-extrabold sm:text-2xl">
-          {{ daily.done ? es.home.dailyDone(daily.attempts, daily.solved) : es.home.dailyPending }}
-        </span>
-      </span>
-      <span class="hidden items-center pr-5 sm:flex">
-        <span class="poster-cta mt-0">{{ daily.done ? es.home.dailySee : es.home.dailyPlay }}</span>
-      </span>
-      <span class="flex items-center pr-4 sm:hidden" aria-hidden="true">
-        <svg viewBox="0 0 20 20" class="size-6 transition-transform group-hover:translate-x-1">
-          <path
-            d="M4 10h11M11 5l5 5-5 5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
-    </RouterLink>
+    <!-- Hoy: los dos retos del día -->
+    <section class="flex animate-rise flex-col gap-3 [animation-delay:140ms]" aria-labelledby="hoy">
+      <h2 id="hoy" class="label-mono">{{ es.daily.todayHeading }}</h2>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <DayTicket
+          to="/diario"
+          tone="cobalt"
+          :number="today.number"
+          :kicker="es.daily.homeKicker(today.number)"
+          :title="
+            challenge.finished
+              ? es.daily.homeDone(challenge.score, DAILY_MAX_SCORE)
+              : challenge.started
+                ? es.daily.homeProgress(Math.min(challenge.answered + 1, DAILY_LENGTH))
+                : es.daily.homePending
+          "
+          :note="
+            challengeStreak.current > 0
+              ? `🔥 ${es.daily.streakLabel}: ${es.daily.streakDays(challengeStreak.current)}`
+              : undefined
+          "
+          :cta="
+            challenge.finished
+              ? es.daily.homeSee
+              : challenge.started
+                ? es.daily.homeContinue
+                : es.daily.homePlay
+          "
+        />
+        <DayTicket
+          to="/silueta/diario"
+          :number="today.number"
+          :kicker="es.home.dailyKicker(today.number)"
+          :title="
+            daily.done ? es.home.dailyDone(daily.attempts, daily.solved) : es.home.dailyPending
+          "
+          :cta="daily.done ? es.home.dailySee : es.home.dailyPlay"
+        />
+      </div>
+    </section>
 
     <!-- Modos: carteles de viaje -->
-    <section class="grid gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
+    <section class="grid gap-7 sm:grid-cols-2 sm:gap-8">
       <RouterLink
         to="/mapa"
-        class="poster group -rotate-1 bg-cobalt text-paper-light animate-rise [animation-delay:180ms]"
+        class="poster theme-light group -rotate-1 bg-cobalt text-cream animate-rise [animation-delay:180ms]"
       >
         <div class="poster-strip bg-cobalt-deep">
           <span>{{ es.home.modeLabel(1) }}</span>
@@ -161,7 +168,7 @@ const stamps = computed(() =>
           <h2 class="font-display text-[2.4rem] leading-none font-extrabold">
             {{ es.home.locateTitle }}
           </h2>
-          <p class="mt-2 text-cobalt-light">{{ es.home.locateText }}</p>
+          <p class="mt-2 text-cream/80">{{ es.home.locateText }}</p>
           <span class="poster-cta">
             {{ es.home.play }}
             <svg
@@ -184,7 +191,7 @@ const stamps = computed(() =>
 
       <RouterLink
         to="/trivia"
-        class="poster group rotate-1 bg-sun text-ink animate-rise [animation-delay:260ms]"
+        class="poster theme-light group rotate-1 bg-sun text-ink animate-rise [animation-delay:260ms]"
       >
         <div class="poster-strip bg-pink">
           <span>{{ es.home.modeLabel(2) }}</span>
@@ -222,7 +229,7 @@ const stamps = computed(() =>
 
       <RouterLink
         to="/silueta"
-        class="poster group -rotate-1 bg-tomato text-ink animate-rise [animation-delay:300ms] sm:col-span-2 lg:col-span-1"
+        class="poster theme-light group -rotate-1 bg-tomato text-ink animate-rise [animation-delay:300ms]"
       >
         <div class="poster-strip bg-ink">
           <span>{{ es.home.modeLabel(3) }}</span>
@@ -257,6 +264,44 @@ const stamps = computed(() =>
           </span>
         </div>
       </RouterLink>
+
+      <RouterLink
+        to="/escribe"
+        class="poster theme-light group rotate-1 bg-jade text-ink animate-rise [animation-delay:340ms]"
+      >
+        <div class="poster-strip bg-ink">
+          <span>{{ es.home.modeLabel(4) }}</span>
+          <span>{{ es.home.typingMeta }}</span>
+        </div>
+        <div class="halftone h-40 px-4 pt-3 text-jade-ink sm:h-44">
+          <PosterTypingArt
+            class="transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-1"
+          />
+        </div>
+        <div class="p-5 pt-2">
+          <h2 class="font-display text-[2.4rem] leading-none font-extrabold">
+            {{ es.home.typingTitle }}
+          </h2>
+          <p class="mt-2 text-ink">{{ es.home.typingText }}</p>
+          <span class="poster-cta">
+            {{ es.home.play }}
+            <svg
+              viewBox="0 0 20 20"
+              class="size-4 transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 10h11M11 5l5 5-5 5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+        </div>
+      </RouterLink>
     </section>
 
     <!-- Pasaporte con los récords -->
@@ -265,10 +310,10 @@ const stamps = computed(() =>
       aria-labelledby="pasaporte-titulo"
     >
       <header
-        class="flex flex-wrap items-end justify-between gap-3 border-b-[2.5px] border-ink bg-cobalt px-5 py-4 text-paper-light"
+        class="flex flex-wrap items-end justify-between gap-3 border-b-[2.5px] border-ink bg-cobalt px-5 py-4 text-cream"
       >
         <div>
-          <p class="label-mono text-cobalt-light">{{ es.home.passportKicker }}</p>
+          <p class="label-mono text-cream/80">{{ es.home.passportKicker }}</p>
           <h2 id="pasaporte-titulo" class="font-display text-3xl font-extrabold">
             {{ es.home.passportTitle }}
           </h2>
@@ -279,9 +324,25 @@ const stamps = computed(() =>
           >
             {{ es.home.trips(progress.gamesPlayed) }}
           </span>
-          <span class="label-mono rounded-full border-2 border-ink bg-sun px-3 py-1 text-ink">
+          <span class="label-mono rounded-full border-2 border-ink bg-sun px-3 py-1 text-carbon">
             {{ es.home.stamps(stamps.length) }}
           </span>
+          <RouterLink
+            to="/progreso"
+            class="label-mono flex items-center gap-1 rounded-full border-2 border-ink bg-pink px-3 py-1 text-carbon shadow-ink-sm transition-transform hover:-translate-y-0.5"
+          >
+            {{ es.progress.link }}
+            <svg viewBox="0 0 20 20" class="size-3.5" aria-hidden="true">
+              <path
+                d="M4 10h11M11 5l5 5-5 5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </RouterLink>
         </div>
       </header>
       <div class="guilloche p-5 sm:p-7">
@@ -305,7 +366,7 @@ const stamps = computed(() =>
         >
           <div class="flex -space-x-6" aria-hidden="true">
             <span
-              class="grid size-24 -rotate-6 place-items-center rounded-full border-[3px] border-dashed border-cobalt/40 font-display text-2xl font-extrabold text-cobalt/40"
+              class="grid size-24 -rotate-6 place-items-center rounded-full border-[3px] border-dashed border-cobalt-ink/40 font-display text-2xl font-extrabold text-cobalt-ink/40"
               >?</span
             >
             <span
@@ -328,7 +389,7 @@ const stamps = computed(() =>
   overflow: hidden;
   border: 2.5px solid var(--color-ink);
   border-radius: 1.4rem;
-  box-shadow: 7px 7px 0 0 var(--color-ink);
+  box-shadow: 7px 7px 0 0 var(--color-shadow);
   transition:
     rotate 300ms ease,
     transform 300ms ease,
@@ -338,12 +399,12 @@ const stamps = computed(() =>
 .poster:hover {
   rotate: 0deg;
   transform: translate(-2px, -3px);
-  box-shadow: 10px 10px 0 0 var(--color-ink);
+  box-shadow: 10px 10px 0 0 var(--color-shadow);
 }
 
 .poster:active {
   transform: translate(4px, 4px);
-  box-shadow: 2px 2px 0 0 var(--color-ink);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
 }
 
 .poster-strip {
@@ -371,25 +432,12 @@ const stamps = computed(() =>
   padding: 0.55rem 1.1rem;
   font-weight: 800;
   color: var(--color-ink);
-  box-shadow: 3px 3px 0 0 var(--color-ink);
+  box-shadow: 3px 3px 0 0 var(--color-shadow);
   transition: background-color 200ms ease;
 }
 
 .poster:hover .poster-cta {
   background: var(--color-pink);
-}
-
-.ticket {
-  transition:
-    transform 250ms ease,
-    box-shadow 250ms ease;
-}
-.ticket:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 0 var(--color-ink);
-}
-.ticket:hover .poster-cta {
-  background: var(--color-sun);
 }
 
 /* Fondo de seguridad de pasaporte (guilloché) */

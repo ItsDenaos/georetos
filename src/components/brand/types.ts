@@ -1,7 +1,7 @@
 /** Tipos compartidos por los componentes de identidad. */
 
 /** Tinta de un sello de pasaporte. */
-export type StampTone = 'cobalt' | 'pink' | 'jade' | 'tomato'
+export type StampTone = 'cobalt' | 'pink' | 'jade' | 'tomato' | 'sun'
 
 /** Tinta de un sello de acierto, fallo o récord. */
 export type InkTone = 'ok' | 'meh' | 'fail' | 'brand' | 'pink'

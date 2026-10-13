@@ -2,9 +2,26 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="apple-mobile-web-app-title" content="GeoRetos" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#2f7fb8" />
+    <meta name="theme-color" content="#f6f0e1" />
+    <script>
+      // Aplica el tema guardado antes de pintar (sin destello). Ver src/composables/useTheme.ts.
+      ;(function () {
+        var pref = null
+        try {
+          pref = localStorage.getItem('georetos:v1:tema')
+        } catch (e) {}
+        var dark =
+          pref === 'dark' ||
+          (pref !== 'light' && !!window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#12152a' : '#f6f0e1')
+      })()
+    </script>
     <meta name="description" content="Retos de geografía para aprender jugando: ubica países en el mapa y responde trivia." />
     <title>GeoRetos</title>
   </head>

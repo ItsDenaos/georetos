@@ -84,6 +84,10 @@ export const useTriviaStore = defineStore('trivia', () => {
       total: questions.value.length,
       timeMs: endedAt.value - startedAt.value,
       finishedAt: new Date(endedAt.value).toISOString(),
+      answers: questions.value.map((q) => ({
+        code: q.subject,
+        mark: answers.value.find((a) => a.questionId === q.id)?.correct ? 'ok' : 'fail',
+      })),
       misses: missed.map((q) => ({
         code: q.subject,
         label: q.prompt,

@@ -96,7 +96,7 @@ const id = useId()
   rotate: 0deg !important;
 }
 .tone-cobalt {
-  color: var(--color-cobalt);
+  color: var(--color-cobalt-ink);
 }
 .tone-pink {
   color: var(--color-pink-ink);
@@ -106,5 +106,8 @@ const id = useId()
 }
 .tone-tomato {
   color: var(--color-tomato-ink);
+}
+.tone-sun {
+  color: var(--color-sun-ink);
 }
 </style>

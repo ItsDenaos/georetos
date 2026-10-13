@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Cronómetro circular para la contrarreloj (el texto accesible lo pone quien lo usa). */
+/** Cronómetro circular (el texto accesible lo pone quien lo usa). */
 import { computed } from 'vue'
 
 const props = defineProps<{ remainingMs: number; totalMs: number }>()

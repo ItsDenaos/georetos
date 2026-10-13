@@ -31,7 +31,7 @@ svg :is(circle, rect) {
 }
 svg path {
   fill: none;
-  stroke: white;
+  stroke: var(--color-cream);
   stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -43,7 +43,7 @@ svg path {
   fill: var(--color-sun);
 }
 .status-meh path {
-  stroke: var(--color-ink);
+  stroke: var(--color-carbon);
 }
 .status-fail :is(circle, rect) {
   fill: var(--color-tomato);

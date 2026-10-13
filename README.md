@@ -8,9 +8,22 @@ Retos de geografía en español para aprender jugando, pensados para el celular.
 - **Silueta**: ves solo la forma de un país y tienes 6 intentos para escribir su
   nombre. Cada fallo dice a cuántos km está y en qué dirección. Hay partidas de
   práctica (5 o 10 siluetas) y una **silueta del día**, igual para todos.
+- **Escribe los países**: eliges región y tiempo (5, 10 o 15 minutos) y escribes
+  todos los países que recuerdes; cada acierto se pinta en el mapa sin pulsar Enter.
+- **Reto diario**: 10 preguntas mezcladas (5 de mapa y 5 de trivia, de fácil a
+  difícil), iguales para todos ese día. Se juega una vez al día, guarda la racha
+  y se puede compartir el resultado.
+- **Contrarreloj** y **Supervivencia**: variantes sin cantidad fija de "Ubica el
+  país" y de la Trivia (ver abajo).
+- **Mi progreso** (`/progreso`): estadísticas por país y continente, el mapa de lo
+  que sabes, la racha de días y 10 logros.
+- **Desafía a un amigo**: al terminar una partida se comparte un link con la misma
+  partida y tu resultado; quien lo abre juega lo mismo y ve los dos resultados.
 
-Todo corre en el navegador: no hay servidor ni cuentas. Los récords se guardan en
-`localStorage` de cada dispositivo.
+Se puede instalar como app y, una vez cargada, funciona sin internet.
+
+Todo corre en el navegador: no hay servidor ni cuentas. Los récords, las
+estadísticas y los logros se guardan en `localStorage` de cada dispositivo.
 
 ## Requisitos
 
@@ -52,13 +65,176 @@ npm run preview     # sirve dist/ en local para revisarlo
 cualquier ruta.
 
 - **Netlify** (ya configurado): `netlify.toml` define el build (`npm run build`,
-  Node 24), la carpeta `dist`, la redirección de rutas y la caché de `/assets`.
+  Node 24), la carpeta `dist`, la redirección de rutas, la caché de `/assets` y que
+  `sw.js` y `manifest.webmanifest` no se cacheen (así llegan las versiones nuevas).
   Con la CLI: `npx netlify-cli deploy --prod`; o conecta el repositorio en Netlify
   para que cada push publique solo.
 - **Cloudflare Pages**: crea `public/_redirects` con `/* /index.html 200`.
 - **Vercel**: `vercel.json` con `{ "rewrites": [{ "source": "/(.*)", "destination": "/" }] }`.
 - **GitHub Pages**: copia `dist/index.html` como `dist/404.html` y, si el sitio vive
   en una subcarpeta, compila con `npx vite build --base=/nombre-del-repo/`.
+
+## App instalable y sin internet (PWA)
+
+- **Plugin:** `vite-plugin-pwa` (Workbox) en `vite.config.ts`. Genera
+  `manifest.webmanifest` ("GeoRetos", en español, a pantalla completa, con los
+  colores de la marca) y `sw.js`.
+- **Sin internet:** la primera visita guarda en segundo plano lo necesario para
+  jugar, unos 2,9 MB: el código y los estilos, las fuentes (solo el alfabeto
+  latino, que cubre todos los nombres), el mapa (unos 740 KB), las siluetas y solo
+  las 195 banderas jugables. Las banderas regionales (Galicia, Escocia…) quedan
+  fuera: se publican en `assets/banderas/` con el código antes de un punto para
+  poder filtrarlas. Cualquier ruta (`/silueta/diario`, `/progreso`…) abre la app
+  desde la caché.
+- **Actualizaciones:** al publicar una versión nueva aparece "Hay una versión
+  nueva · Actualizar" (`src/components/UpdatePrompt.vue`). No es automático, para
+  no cortar una partida; con la app abierta se busca una versión nueva cada hora.
+- **Instalar:** en "Mi progreso" → Ajustes. En Chrome y Android hay un botón
+  "Instalar app" (`src/composables/useInstall.ts` guarda el aviso del navegador al
+  arrancar); en iPhone se explica "Compartir → Añadir a pantalla de inicio".
+- **Íconos:** se generan desde el emblema (`public/favicon.svg`) con
+  `npm run build:icons` (`pwa-assets.config.ts`) y quedan en `public/`. El ícono
+  adaptable de Android lleva margen para que el alfiler no se recorte.
+- **En desarrollo** (`npm run dev`) no hay service worker. Para probarlo:
+  `npm run build && npm run preview`, abrir la app, detener el servidor y recargar.
+
+## Reto diario
+
+- **Ruta:** `/diario`. Las preguntas salen de la semilla del día
+  (`diario-AAAA-MM-DD`, con la fecha local) y de la versión del generador
+  (`DAILY_CHALLENGE_VERSION` en `src/lib/dailyChallenge.ts`). Si cambias cómo se
+  generan, sube la versión para no alterar los retos ya jugados.
+- **Orden:** mapa y trivia alternados; preguntas 1–3 fáciles, 4–7 medias y 8–10
+  difíciles.
+  - En el mapa, la dificultad la da la superficie del país: más de 500.000 km²,
+    de 100.000 a 500.000 km², o menos de 100.000 km².
+  - La trivia usa sus tres dificultades y nunca repite tema.
+  - Ningún país se repite.
+- **Puntaje sobre 30:** el mapa da 3, 2 o 1 punto según el intento; la trivia, 3
+  si aciertas.
+- **Una vez al día:** cada respuesta (y cada toque equivocado en el mapa) se
+  guarda en `localStorage` al momento, así que recargar no permite volver a
+  sortear. Al terminar se muestra el resultado y la **racha** de días seguidos.
+- **Compartir:** en el celular abre el menú del sistema; en el escritorio copia
+  este texto:
+  ```
+  GeoRetos · Reto diario Nº 3
+  24/30 · racha de 5 🔥
+  🟩🟨🟩🟥🟩🟩🟨🟩🟩🟥
+  https://tu-sitio/diario
+  ```
+
+## Contrarreloj y Supervivencia
+
+Se eligen en el primer paso de la configuración de "Ubica el país" y de la Trivia.
+Las reglas están en `src/lib/variants.ts`, las preguntas a demanda en
+`src/lib/streams.ts` y la partida en `src/stores/run.ts` (con
+`src/components/run/RunGame.vue`). Las preguntas son las mismas de siempre
+(`MapQuestion` y `TriviaQuestion`).
+
+- **Contrarreloj:** 60 segundos para acertar todo lo que puedas; cada fallo resta 3
+  segundos. En el mapa cuenta cada toque equivocado, también el que agota los 3
+  intentos o el salto. Se elige región y, en la Trivia, dificultad.
+- **Supervivencia:** preguntas sin fin con 3 vidas, siempre con el mundo entero.
+  En el mapa la vida se pierde al fallar el país (tras 3 intentos o al saltar), no
+  en cada toque. La dificultad sube cada 5 aciertos: fácil, media y difícil. En el
+  mapa se mide por la superficie del país, igual que en el Reto diario.
+- **Puntaje:** la cantidad de aciertos. Cada variante guarda su propio récord (por
+  región y, en la Trivia contrarreloj, por dificultad). Si dos partidas empatan,
+  gana la de menos fallos y después la más rápida.
+- **Nunca repiten país**; si se acaban los países de la región, la partida
+  termina.
+
+## Desafía a un amigo
+
+- **El link** es el de la misma partida (misma semilla y opciones) más
+  `&desafio=…`: tu puntaje, aciertos, tiempo, la fila de resultados por pregunta y
+  un nombre opcional (máximo 20 caracteres, recordado en `georetos:v1:nombre`), en
+  JSON codificado en base64url. Unos 150 caracteres. Lógica en `src/lib/challenge.ts`.
+- **Al abrirlo** se presenta el reto antes de jugar ("Ana te desafía: 21/30. ¿Lo
+  superas?"). Al aceptarlo se guarda en `sessionStorage` (`georetos:v1:desafio`) y,
+  al terminar, los resultados muestran los dos lado a lado con "¡Ganaste!", "¡Te
+  ganó!" o "¡Empate!". Gana más puntos; si empatan, el menor tiempo (en segundos).
+  En Contrarreloj y Supervivencia, antes que el tiempo, gana quien falló menos.
+- **Funciona en todos los modos con resultados**: Ubica el país, Trivia, Silueta,
+  Contrarreloj, Supervivencia y Escribe los países (ahí el reto es la misma región
+  y el mismo tiempo). En Supervivencia las preguntas coinciden mientras los dos
+  acierten y fallen igual, porque la dificultad depende de los aciertos. Las
+  partidas de repaso no se comparten. Los retos diarios ya tienen su propio botón.
+- **Versión del generador** (`GENERATOR_VERSION` en `src/lib/challenge.ts`): va
+  dentro del link. Si cambias cómo se generan las partidas o los datos de países,
+  súbela: un link viejo avisará de que las preguntas pueden no coincidir.
+- **Validación:** el link se lee sin fiarse de él (números enteros dentro de rango,
+  puntaje no mayor que el máximo, nombre sin caracteres de control y recortado, que
+  se muestra siempre como texto). Un link dañado deja jugar la partida sin comparar.
+  Parámetros ajenos, como el `fbclid` que añaden algunas apps, se ignoran.
+- **Limitación honesta:** sin servidor, quien edite el link puede inventar un
+  puntaje. Para jugar entre amigos alcanza.
+
+## Mi progreso y logros
+
+- **Un solo punto de registro:** cada partida terminada pasa por `finishGame` (o
+  `finishDailyGame` en los retos diarios), en `src/stores/stats.ts`, que suma el
+  viaje y el récord del pasaporte, las estadísticas y los logros.
+- **Estadísticas** (`georetos:v1:estadisticas`, lógica pura en `src/lib/stats.ts`):
+  aciertos, aciertos tardíos y fallos por país; días jugados; tiempo; regiones;
+  microestados encontrados al primer intento y hazañas para los logros.
+  - Escribe los países suma días, tiempo y regiones, pero no precisión por país:
+    no recordar un nombre a contrarreloj no es fallarlo.
+  - Las partidas de antes de esta versión no traían el detalle por pregunta. La
+    primera vez se deduce lo posible: días y regiones a partir de los récords, y las
+    respuestas de los retos diarios ya jugados.
+- **La página:** resumen (partidas, preguntas, precisión, tiempo), racha de días con
+  cualquier partida (la del Reto diario aparte), logros, precisión por continente,
+  mapa de lo que sabes (verde desde el 80 %, amarillo con puntos desde el 50 %, rojo
+  con rayas por debajo; tocar un país dice cómo te va), los 10 países que más fallas
+  (con dos preguntas o más) con "Repasar estos países", récords por modo y ajustes
+  (tema y "Borrar mi progreso", con confirmación).
+- **Logros** (`georetos:v1:logros`, reglas puras en `src/lib/achievements.ts`):
+
+  | Logro | Cómo se consigue |
+  |---|---|
+  | Primer viaje | Termina tu primera partida |
+  | Sudamérica sin fallos | Ubica el país en Sudamérica, todos los países al primer intento |
+  | Trotamundos | Termina una partida en cada una de las 8 regiones |
+  | Mente enciclopédica | 10/10 en la Trivia difícil |
+  | Ojo de águila | 10 microestados distintos (menos de 1.000 km²) al primer intento en el mapa |
+  | A la primera | Adivina una silueta al primer intento |
+  | Constancia | Juega 7 días seguidos |
+  | Coleccionista | 10 sellos en el pasaporte |
+  | Cartógrafo | Acierta al menos una vez 100 países distintos |
+  | Maratón | Juega 50 partidas |
+
+  Al desbloquear uno cae un sello con confeti ("¡Logro desbloqueado!"), también
+  anunciado al lector de pantalla; si salen varios, aparecen en cola. La primera
+  vez con esta versión, los que ya se cumplían se desbloquean sin aviso.
+- **Ligereza:** la portada no carga los datos de países. Los logros, el aviso y los
+  textos de los récords (`src/lib/recordLabels.ts`) son ligeros; las estadísticas
+  se cargan solo con los juegos y con "Mi progreso".
+
+## Escribe los países
+
+- **Ruta:** `/escribe?region=europa&min=10`. No hay azar: la misma región y el mismo
+  tiempo son siempre el mismo reto.
+- **Cómo se reconoce lo escrito** (`src/lib/typing.ts`, lógica pura con pruebas):
+  - ignora tildes, mayúsculas, espacios y signos ("ee. uu.", "EEUU", "costa  rica")
+    y acepta los alias de `scripts/excepciones.ts` (Holanda, Birmania…);
+  - un país se acepta en cuanto lo escrito es su nombre, sin Enter;
+  - si ese nombre es el comienzo de otro aún pendiente (Guinea / Guinea Ecuatorial,
+    Níger / Nigeria, Sudán / Sudán del Sur, Dominica / Dominicana, o Trinidad /
+    Trinidad y Tobago), espera 0,7 s sin teclear, o un Enter, antes de aceptarlo;
+  - lo que se escribe justo después de un acierto se une a él: "Sudán" + " del
+    Sur" encuentra Sudán del Sur, y el resto de un nombre largo no queda en el campo;
+  - avisa si el país ya está o si no es de la región. Los territorios que no son
+    países jugables (Groenlandia, Puerto Rico…) no cuentan.
+- **En el celular:** el campo lee cada evento `input` en lugar de usar `v-model`,
+  porque en Android el teclado "compone" cada palabra y `v-model` no avisaría
+  hasta terminarla.
+- **Al terminar** (tiempo, todos encontrados o "Me rindo"): los que faltaron se
+  pintan en rojo con rayas y aparecen en una lista. Tocar uno de la lista hace zoom
+  a él (útil para los microestados) y tocar el mapa dice el nombre del país.
+- **Récord** por región y tiempo; si empatan, gana el menor tiempo usado. En los
+  resultados, "Ubícalos en el mapa" abre "Ubica el país" con los que faltaron.
 
 ## Modo Silueta
 
@@ -126,6 +302,14 @@ GeoRetos se ve como un cuaderno de expedición impreso en risografía:
   (marcas de registro, rosa de los vientos) para los mapas y un pase de abordar en los
   resultados, con código de barras generado a partir de la semilla.
 
+**Modo oscuro ("atlas nocturno")**: papel azul noche y tinta crema. El botón de la
+cabecera alterna entre sistema, claro y oscuro; un script en `index.html` aplica el
+tema antes de pintar. Los colores tienen significado (`paper` = superficie, `ink` =
+texto y bordes, `*-ink` = texto de color, `*-light` = fondos suaves, `carbon` y
+`cream` = fijos), así que el tema oscuro solo los reasigna. Los carteles son
+"islas impresas" (`.theme-light`) que se ven igual en los dos temas. Una prueba
+(`contrast.spec.ts`) exige 4,5:1 en los pares de texto de ambos temas.
+
 Los tokens (colores, fuentes, sombras, animaciones) están en `src/assets/main.css`
 y los componentes de identidad en `src/components/brand/`. El globo de la portada es
 una proyección ortográfica real precalculada con `npm run build:globe`, así la
@@ -140,7 +324,8 @@ src/data/           countries.json generado
 src/lib/            lógica sin Vue: semilla, preguntas, puntaje, regiones, URL, mapa
 src/stores/         Pinia: partida de cada modo, último resultado, récords
 src/components/     WorldMap.vue (mapa reutilizable) y piezas de cada modo
-src/views/          portada, Ubica el país, Trivia, resultados
+src/views/          portada, Ubica el país, Trivia, Silueta, Escribe los países,
+                    Reto diario, Mi progreso, resultados
 src/__tests__/      pruebas con Vitest
 ```
 
@@ -161,10 +346,14 @@ en la URL, por ejemplo:
 
 - `/mapa?region=sudamerica&n=10&seed=k3x9tq`
 - `/trivia?dificultad=media&region=europa&tiempo=1&seed=k3x9tq`
+- `/mapa?variante=contrarreloj&region=europa&seed=k3x9tq`,
+  `/trivia?variante=supervivencia&seed=k3x9tq`
 - `&paises=co,ec` limita la partida a esos países ("Repasar fallos").
+- `/escribe?region=europa&min=10` (sin semilla: no hay azar).
 
-La misma URL produce siempre la misma partida: es la base del futuro reto diario y de
-compartir retos.
+La misma URL produce siempre la misma partida (en Supervivencia, mientras aciertes
+y falles en el mismo orden, porque la dificultad depende de tus aciertos). Es la base
+para compartir retos.
 
 ## Créditos
 

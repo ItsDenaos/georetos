@@ -65,7 +65,7 @@ function start() {
       class="group flex items-center gap-4 rounded-2xl border-2 border-ink bg-pink-light px-4 py-3 shadow-ink-sm transition hover:-translate-y-px hover:shadow-ink"
     >
       <span
-        class="grid size-12 shrink-0 -rotate-6 place-items-center rounded-full border-2 border-ink bg-pink font-display text-xl font-extrabold"
+        class="grid size-12 shrink-0 -rotate-6 place-items-center rounded-full border-2 border-ink bg-pink font-display text-xl font-extrabold text-carbon"
         aria-hidden="true"
         >{{ daily.challenge.number }}</span
       >

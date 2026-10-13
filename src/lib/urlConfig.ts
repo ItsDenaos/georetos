@@ -9,6 +9,8 @@ import type { LocateConfig, LocateCount } from './locate'
 import { isRegionId } from './regions'
 import { SILHOUETTE_COUNTS, type SilhouetteConfig, type SilhouetteCount } from './silhouette'
 import type { Difficulty, RegionId } from './types'
+import { isTypingMinutes, type TypingConfig } from './typing'
+import type { RunConfig, RunMode } from './variants'
 
 export interface TriviaUrlConfig {
   difficulty: Difficulty
@@ -104,5 +106,54 @@ export function silhouetteQuery(config: SilhouetteConfig): LocationQueryRaw {
     n: String(config.count),
     seed: config.seed,
     ...(config.only ? { paises: config.only.join(',') } : {}),
+  }
+}
+
+/**
+ * Partidas sin cantidad fija: /mapa?variante=contrarreloj&region=europa&seed=…,
+ * /trivia?variante=supervivencia&seed=… En Supervivencia la región es siempre el
+ * mundo y la dificultad sube sola.
+ */
+export function parseRunQuery(mode: RunMode, query: LocationQuery): RunConfig | null {
+  const variant = single(query, 'variante')
+  if (variant !== 'contrarreloj' && variant !== 'supervivencia') return null
+  const region = variant === 'supervivencia' ? 'mundo' : (single(query, 'region') ?? 'mundo')
+  if (!isRegionId(region)) return null
+  const difficulty = single(query, 'dificultad') ?? 'media'
+  if (!(DIFFICULTIES as readonly string[]).includes(difficulty)) return null
+  return {
+    mode,
+    variant,
+    region,
+    difficulty: difficulty as Difficulty,
+    seed: parseSeed(query) ?? '',
+  }
+}
+
+export function runQuery(config: RunConfig): LocationQueryRaw {
+  return {
+    variante: config.variant,
+    ...(config.variant === 'contrarreloj' && config.region !== 'mundo'
+      ? { region: config.region }
+      : {}),
+    ...(config.mode === 'trivia' && config.variant === 'contrarreloj'
+      ? { dificultad: config.difficulty }
+      : {}),
+    seed: config.seed,
+  }
+}
+
+/** Escribe los países: /escribe?region=europa&min=10 (sin azar: no lleva semilla). */
+export function parseTypingQuery(query: LocationQuery): TypingConfig | null {
+  const region = single(query, 'region') ?? 'mundo'
+  const minutes = Number(single(query, 'min'))
+  if (!isRegionId(region) || !isTypingMinutes(minutes)) return null
+  return { region, minutes }
+}
+
+export function typingQuery(config: TypingConfig): LocationQueryRaw {
+  return {
+    ...(config.region !== 'mundo' ? { region: config.region } : {}),
+    min: String(config.minutes),
   }
 }

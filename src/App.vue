@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
+import AchievementToast from '@/components/AchievementToast.vue'
 import BrandMark from '@/components/brand/BrandMark.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
+import UpdatePrompt from '@/components/UpdatePrompt.vue'
 import { useAnnouncer } from '@/composables/useAnnouncer'
 import { es } from '@/i18n/es'
 
@@ -23,18 +26,19 @@ const { message } = useAnnouncer()
         <RouterLink to="/" class="group flex items-center gap-2" :aria-label="es.app.name">
           <BrandMark :size="36" class="transition-transform duration-300 group-hover:-rotate-12" />
           <span class="font-display text-[1.6rem] leading-none font-extrabold">
-            Geo<em class="text-cobalt">Retos</em>
+            Geo<em class="text-cobalt-ink">Retos</em>
           </span>
         </RouterLink>
+        <span class="ml-auto" />
         <span
           v-if="route.name === 'home'"
-          class="label-mono ml-auto hidden rounded-full border-2 border-ink px-3 py-1 sm:inline"
+          class="label-mono hidden rounded-full border-2 border-ink px-3 py-1 sm:inline"
           >{{ es.app.tagline }}</span
         >
         <RouterLink
           v-else
           to="/"
-          class="label-mono ml-auto flex items-center gap-1.5 rounded-full border-2 border-ink bg-paper-light px-3 py-1.5 shadow-ink-sm transition hover:-translate-y-px active:translate-y-px active:shadow-none"
+          class="label-mono flex items-center gap-1.5 rounded-full border-2 border-ink bg-paper-light px-3 py-1.5 shadow-ink-sm transition hover:-translate-y-px active:translate-y-px active:shadow-none"
         >
           <svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
             <path
@@ -48,11 +52,14 @@ const { message } = useAnnouncer()
           </svg>
           {{ es.app.home }}
         </RouterLink>
+        <ThemeToggle />
       </div>
     </header>
     <main id="contenido" class="mx-auto flex w-full max-w-5xl flex-1 flex-col" tabindex="-1">
       <RouterView />
     </main>
   </div>
+  <AchievementToast />
+  <UpdatePrompt />
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ message }}</div>
 </template>

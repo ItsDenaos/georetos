@@ -30,12 +30,18 @@ export function maxScore(mode: GameMode, questions: number): number {
 
 export interface ScoreEntry {
   score: number
+  maxScore: number
   timeMs: number
 }
 
-/** Mejor puntaje; si empatan, gana el menor tiempo. */
+/**
+ * Mejor puntaje; si empatan, gana la partida con menos preguntas respondidas
+ * (en Contrarreloj y Supervivencia, la de menos fallos; en la clásica siempre
+ * coinciden) y, después, la de menor tiempo.
+ */
 export function isBetter(candidate: ScoreEntry, current: ScoreEntry | undefined): boolean {
   if (!current) return true
   if (candidate.score !== current.score) return candidate.score > current.score
+  if (candidate.maxScore !== current.maxScore) return candidate.maxScore < current.maxScore
   return candidate.timeMs < current.timeMs
 }

@@ -15,7 +15,7 @@ const emit = defineEmits<{ start: [] }>()
           aria-hidden="true"
           >{{ String(mode).padStart(2, '0') }}</span
         >
-        <p class="label-mono text-cobalt">{{ es.setup.modeKicker(mode, title) }}</p>
+        <p class="label-mono text-cobalt-ink">{{ es.setup.modeKicker(mode, title) }}</p>
         <h1
           class="relative mt-2 font-display text-[2.6rem] leading-none font-extrabold sm:text-6xl"
         >

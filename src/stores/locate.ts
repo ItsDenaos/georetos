@@ -3,96 +3,64 @@ import { defineStore } from 'pinia'
 
 import { es } from '@/i18n/es'
 import { getCountry } from '@/lib/countries'
-import {
-  buildLocateQueue,
-  evaluateGuess,
-  type LocateConfig,
-  type LocateOutcome,
-} from '@/lib/locate'
-import type { GameResult } from '@/lib/results'
+import { buildLocateQueue, type LocateConfig } from '@/lib/locate'
+import type { AnswerMark, GameResult } from '@/lib/results'
 import { createRng } from '@/lib/rng'
-import { MAX_ATTEMPTS, maxScore } from '@/lib/scoring'
-
-/** Cómo quedó cada país: primer intento, segundo/tercero o fallado. */
-export type LocateMark = 'first' | 'later' | 'failed'
+import { locatePoints, maxScore } from '@/lib/scoring'
 
 /**
- * playing: esperando un toque · correct: celebrando un acierto ·
- * revealing: mostrando el país tras fallar · finished: partida terminada.
+ * Partida de "Ubica el país". Los intentos de cada país los lleva MapQuestion;
+ * aquí solo se registra cómo terminó cada uno.
  */
-export type LocatePhase = 'playing' | 'correct' | 'revealing' | 'finished'
-
 export const useLocateStore = defineStore('locate', () => {
   const config = ref<LocateConfig | null>(null)
   const queue = ref<string[]>([])
   const index = ref(0)
-  const attemptsUsed = ref(0)
-  const marks = ref<Record<string, LocateMark>>({})
+  const marks = ref<Record<string, AnswerMark>>({})
   const score = ref(0)
-  const phase = ref<LocatePhase>('playing')
+  const finished = ref(false)
   const startedAt = ref(0)
   const endedAt = ref(0)
 
   const target = computed(() => queue.value[index.value] ?? null)
   const total = computed(() => queue.value.length)
-  const attemptsLeft = computed(() => MAX_ATTEMPTS - attemptsUsed.value)
+  /** ¿El país actual ya terminó (acertado, fallado o saltado)? */
+  const resolved = computed(() => target.value !== null && target.value in marks.value)
 
   function start(c: LocateConfig) {
     config.value = c
     queue.value = buildLocateQueue(c, createRng(`locate|${c.seed}|${c.region}|${c.count}`))
     index.value = 0
-    attemptsUsed.value = 0
     marks.value = {}
     score.value = 0
-    phase.value = queue.value.length > 0 ? 'playing' : 'finished'
+    finished.value = queue.value.length === 0
     startedAt.value = Date.now()
     endedAt.value = 0
   }
 
-  function guess(code: string): LocateOutcome | null {
+  /** Cómo terminó el país actual: intento en que se acertó (1–3), o null si se falló o se saltó. */
+  function resolve(attempt: number | null) {
     const current = target.value
-    if (phase.value !== 'playing' || !current) return null
-    const outcome = evaluateGuess(current, code, attemptsUsed.value)
-    if (outcome.kind === 'correct') {
-      marks.value[current] = outcome.attempt === 1 ? 'first' : 'later'
-      score.value += outcome.points
-      phase.value = 'correct'
-    } else if (outcome.kind === 'wrong') {
-      attemptsUsed.value += 1
-    } else {
-      attemptsUsed.value = MAX_ATTEMPTS
-      marks.value[current] = 'failed'
-      phase.value = 'revealing'
-    }
-    return outcome
-  }
-
-  /** Saltar cuenta como fallo. */
-  function skip(): LocateOutcome | null {
-    const current = target.value
-    if (phase.value !== 'playing' || !current) return null
-    marks.value[current] = 'failed'
-    attemptsUsed.value = MAX_ATTEMPTS
-    phase.value = 'revealing'
-    return { kind: 'failed', guessed: null }
+    if (!current || resolved.value || finished.value) return
+    marks.value[current] = attempt === null ? 'fail' : attempt === 1 ? 'ok' : 'meh'
+    score.value += attempt === null ? 0 : locatePoints(attempt)
   }
 
   function next() {
-    if (phase.value === 'playing' || phase.value === 'finished') return
+    if (!resolved.value || finished.value) return
     index.value += 1
-    attemptsUsed.value = 0
     if (index.value >= queue.value.length) {
-      phase.value = 'finished'
+      finished.value = true
       endedAt.value = Date.now()
-    } else {
-      phase.value = 'playing'
     }
   }
 
   function buildResult(): Omit<GameResult, 'isRecord' | 'previousBest'> | null {
     const c = config.value
-    if (!c || phase.value !== 'finished') return null
-    const failed = queue.value.filter((code) => marks.value[code] === 'failed')
+    if (!c || !finished.value) return null
+    const failed = queue.value.filter(
+      (code) => marks.value[code] !== 'ok' && marks.value[code] !== 'meh',
+    )
     return {
       mode: 'locate',
       region: c.region,
@@ -106,6 +74,7 @@ export const useLocateStore = defineStore('locate', () => {
       total: queue.value.length,
       timeMs: endedAt.value - startedAt.value,
       finishedAt: new Date(endedAt.value).toISOString(),
+      answers: queue.value.map((code) => ({ code, mark: marks.value[code] ?? 'fail' })),
       misses: failed.map((code) => {
         const country = getCountry(code)
         const detail = country?.capital ? es.results.capitalHint(country.capital) : undefined
@@ -118,16 +87,14 @@ export const useLocateStore = defineStore('locate', () => {
     config,
     queue,
     index,
-    attemptsUsed,
-    attemptsLeft,
     marks,
     score,
-    phase,
+    finished,
     target,
     total,
+    resolved,
     start,
-    guess,
-    skip,
+    resolve,
     next,
     buildResult,
   }
